@@ -1,0 +1,887 @@
+<title>Noble Property</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky account bar, tabbed workspace; browse = survey map beside listing ledger, stacking on phones */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --sunk: #e8ece7;
+  --line: #d3dad2;
+  --ink: #17221d;
+  --muted: #5b6a62;
+  --accent: #0e6a57;
+  --accent-ink: #ffffff;
+  --accent-soft: #d9ece5;
+  --escrow: #a8711a;
+  --escrow-soft: #f5e8cf;
+  --ok: #2f7d3b;
+  --ok-soft: #dcefdc;
+  --warn: #9a5b00;
+  --warn-soft: #fbe9c9;
+  --bad: #b3322a;
+  --bad-soft: #f8dcd8;
+  --map-land: #e3e9dd;
+  --map-water: #bcd6dc;
+  --map-road: #ffffff;
+  --sale: #0e6a57;
+  --rent: #2b5ea8;
+  --land: #a8711a;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111814; --surface: #19221d; --sunk: #0d130f; --line: #2d3a33; --ink: #e6ede8; --muted: #9aaba2;
+    --accent: #3fb898; --accent-ink: #06261e; --accent-soft: #173b31; --escrow: #e0a84a; --escrow-soft: #3a2c13;
+    --ok: #6cc77a; --ok-soft: #183622; --warn: #e5a54a; --warn-soft: #3a2a10; --bad: #f07a70; --bad-soft: #3d1a17;
+    --map-land: #1d2a23; --map-water: #1c3a44; --map-road: #2c3b33; --sale: #3fb898; --rent: #6f9be0; --land: #e0a84a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111814; --surface: #19221d; --sunk: #0d130f; --line: #2d3a33; --ink: #e6ede8; --muted: #9aaba2;
+  --accent: #3fb898; --accent-ink: #06261e; --accent-soft: #173b31; --escrow: #e0a84a; --escrow-soft: #3a2c13;
+  --ok: #6cc77a; --ok-soft: #183622; --warn: #e5a54a; --warn-soft: #3a2a10; --bad: #f07a70; --bad-soft: #3d1a17;
+  --map-land: #1d2a23; --map-water: #1c3a44; --map-road: #2c3b33; --sale: #3fb898; --rent: #6f9be0; --land: #e0a84a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h2 { font-size: 1.6rem; font-weight: 700; }
+h3 { font-size: 1.1rem; font-weight: 700; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono, .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+
+/* Top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.bar { display: flex; align-items: center; gap: 16px; padding-block: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 8px; margin-right: auto; }
+.brand b { font-family: var(--f-display); font-size: 1.35rem; letter-spacing: -.01em; }
+.brand span { font-family: var(--f-mono); font-size: .72rem; color: var(--muted); }
+.who { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.who select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); max-width: 100%; }
+.bell { position: relative; background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.bell i { position: absolute; top: -6px; right: -6px; background: var(--bad); color: #fff; font-style: normal; font-size: .7rem; border-radius: 99px; padding: 0 6px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 0; scrollbar-width: none; }
+.tab { border: 0; background: none; padding: 10px 12px; border-bottom: 2px solid transparent; cursor: pointer; color: var(--muted); white-space: nowrap; font-weight: 500; }
+.tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .ct { font-family: var(--f-mono); font-size: .75rem; background: var(--sunk); border-radius: 99px; padding: 1px 7px; margin-left: 4px; }
+
+main { padding-block: 24px 64px; }
+.page-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+
+/* Pills & buttons */
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.escrow { background: var(--escrow-soft); color: var(--escrow); }
+.pill.t-sale { background: var(--accent-soft); color: var(--sale); }
+.pill.t-rent { background: color-mix(in srgb, var(--rent) 16%, var(--surface)); color: var(--rent); }
+.pill.t-land { background: var(--escrow-soft); color: var(--land); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .9rem; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.escrow { background: var(--escrow); color: var(--surface); border-color: var(--escrow); }
+.btn.danger { color: var(--bad); }
+.btn.ghost { border-color: transparent; background: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Browse */
+.browse { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
+.mapbox { position: sticky; top: 130px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; }
+.map { width: 100%; height: auto; display: block; border-radius: 6px; background: var(--map-land); }
+.map .pin { cursor: pointer; }
+.map text { font-family: var(--f-mono); fill: var(--muted); }
+.legend { display: flex; gap: 14px; margin-top: 8px; font-size: .8rem; color: var(--muted); flex-wrap: wrap; }
+.legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: currentColor; vertical-align: 0; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 12px; cursor: pointer; font-size: .85rem; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.ledger { display: grid; gap: 10px; }
+.lcard { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; cursor: pointer; text-align: left; width: 100%; }
+.lcard:hover, .lcard.hl { border-color: var(--accent); }
+.lcard .ph { aspect-ratio: 4/3; border-radius: 6px; overflow: hidden; max-width: 100%; }
+.lcard .ph svg, .gallery svg, .thumbs svg, .pickgrid svg { display: block; width: 100%; height: 100%; }
+.lmeta { display: grid; gap: 4px; min-width: 0; }
+.price { font-family: var(--f-mono); font-weight: 500; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.price small { color: var(--muted); font-size: .78rem; }
+.facts { display: flex; gap: 12px; flex-wrap: wrap; font-size: .82rem; color: var(--muted); }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
+.stack { display: grid; gap: 14px; }
+.detail { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.gallery { aspect-ratio: 16/9; border-radius: var(--r); overflow: hidden; max-width: 100%; }
+.thumbs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
+.thumbs button { padding: 0; border: 2px solid transparent; border-radius: 6px; overflow: hidden; aspect-ratio: 4/3; cursor: pointer; background: none; }
+.thumbs button[aria-current="true"] { border-color: var(--accent); }
+dl.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 0; }
+dl.kv dt { color: var(--muted); font-size: .85rem; }
+dl.kv dd { margin: 0; }
+.owner { display: flex; gap: 12px; align-items: center; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-family: var(--f-display); flex: none; }
+.field { display: grid; gap: 5px; }
+.field > span { font-size: .85rem; font-weight: 600; }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.field .hint { font-size: .78rem; color: var(--muted); font-weight: 400; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.notice { border-radius: 8px; padding: 10px 12px; font-size: .88rem; background: var(--sunk); }
+.notice.warn { background: var(--warn-soft); color: var(--warn); }
+.notice.bad { background: var(--bad-soft); color: var(--bad); }
+.notice.ok { background: var(--ok-soft); color: var(--ok); }
+.notice.escrow { background: var(--escrow-soft); color: var(--escrow); }
+.pickgrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.pickgrid button { padding: 0; aspect-ratio: 4/3; border: 2px solid transparent; border-radius: 6px; overflow: hidden; cursor: pointer; position: relative; background: none; }
+.pickgrid button[aria-pressed="true"] { border-color: var(--accent); }
+.pickgrid button[aria-pressed="true"]::after { content: "✓"; position: absolute; top: 2px; right: 4px; color: #fff; font-weight: 700; text-shadow: 0 0 3px #000; }
+
+/* Messages */
+.chat { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; min-height: 460px; }
+.threads { display: grid; gap: 6px; align-content: start; }
+.thread { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 10px; cursor: pointer; width: 100%; }
+.thread[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.convo { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); min-width: 0; }
+.convo header { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.msgs { padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 440px; }
+.msg { max-width: 78%; padding: 8px 12px; border-radius: 12px; background: var(--sunk); overflow-wrap: anywhere; }
+.msg.me { align-self: flex-end; background: var(--accent-soft); }
+.msg .t { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+.offer { border: 1px dashed var(--escrow); background: var(--escrow-soft); color: var(--ink); }
+.sys { align-self: center; font-size: .78rem; color: var(--muted); text-align: center; }
+.composer { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; }
+.composer form { display: flex; gap: 8px; }
+.composer input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+
+/* Escrow */
+.steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin: 6px 0 4px; list-style: none; padding: 0; }
+.steps li { position: relative; padding-top: 22px; font-size: .78rem; color: var(--muted); text-align: center; padding-inline: 4px; }
+.steps li::before { content: ""; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 2px solid var(--line); z-index: 1; }
+.steps li::after { content: ""; position: absolute; top: 10px; left: -50%; width: 100%; height: 2px; background: var(--line); }
+.steps li:first-child::after { display: none; }
+.steps li.done { color: var(--ink); }
+.steps li.done::before { background: var(--escrow); border-color: var(--escrow); }
+.steps li.done::after { background: var(--escrow); }
+.steps li.fail::before { background: var(--bad); border-color: var(--bad); }
+.split { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.split div { background: var(--sunk); border-radius: 8px; padding: 10px; min-width: 0; }
+.split b { display: block; font-family: var(--f-mono); font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.confirms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.confirm { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .88rem; }
+.confirm .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); flex: none; }
+.confirm.on .dot { background: var(--ok); }
+.log { margin: 0; padding-left: 18px; font-size: .82rem; color: var(--muted); display: grid; gap: 2px; }
+
+/* Admin */
+.subtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.qcard { display: grid; grid-template-columns: 160px minmax(0, 1fr) auto; gap: 16px; align-items: start; }
+.checks { display: grid; gap: 4px; font-size: .86rem; }
+.checks li { list-style: none; display: flex; gap: 8px; }
+.checks ul { margin: 0; padding: 0; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+td.c, th.c { text-align: center; }
+.yes { color: var(--ok); font-weight: 700; }
+.no { color: var(--muted); }
+
+/* Blueprint */
+.bp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.bp ul, .bp ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.bp .wide { grid-column: 1 / -1; }
+
+/* Modal & toast */
+.scrim { position: fixed; inset: 0; background: color-mix(in srgb, var(--ink) 45%, transparent); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.modal { background: var(--surface); border-radius: 14px; width: min(480px, 100%); max-height: 90vh; overflow-y: auto; padding: 22px; display: grid; gap: 14px; }
+.toasts { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); display: grid; gap: 8px; z-index: 60; max-width: calc(100vw - 32px); }
+.toast { background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 8px; font-size: .88rem; box-shadow: 0 6px 20px rgba(0,0,0,.18); animation: rise .2s ease-out; }
+.toast.bad { background: var(--bad); color: #fff; }
+@keyframes rise { from { transform: translateY(8px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+.drawer { position: absolute; right: 0; top: 100%; width: min(340px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 10px; display: grid; gap: 6px; z-index: 30; }
+.drawer div { font-size: .85rem; padding: 6px 8px; border-radius: 6px; background: var(--sunk); }
+.empty { padding: 28px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--r); }
+
+@media (max-width: 900px) {
+  .browse, .detail, .chat, .bp { grid-template-columns: minmax(0, 1fr); }
+  .mapbox { position: static; }
+  .qcard { grid-template-columns: minmax(0, 1fr); }
+  .qcard .ph { max-width: 220px; }
+}
+@media (max-width: 560px) {
+  .lcard { grid-template-columns: 96px minmax(0, 1fr); }
+  .grid2, .confirms { grid-template-columns: minmax(0, 1fr); }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .pickgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .steps li { font-size: .68rem; }
+  .brand span { display: none; }
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="bar">
+      <div class="brand"><b>Noble</b><span>property marketplace · prototype</span></div>
+      <div class="who" id="who"></div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="modal"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Reference data ---------- */
+const ROLES = {
+  buyer:  { label: 'Buyer / renter' },
+  seller: { label: 'Seller / landlord' },
+  agent:  { label: 'Agent' },
+  admin:  { label: 'Admin' }
+};
+const PERMS = [
+  ['Browse approved listings',             1, 1, 1, 1],
+  ['Message owners, make offers',          1, 1, 1, 0],
+  ['Pay deposit or rent into escrow',      1, 1, 1, 0],
+  ['Create listings (own property)',       0, 1, 0, 0],
+  ['Create listings for a client owner',   0, 0, 1, 0],
+  ['Accept offers, confirm handover',      0, 1, 1, 0],
+  ['Report a listing or user',             1, 1, 1, 0],
+  ['Approve / reject listings',            0, 0, 0, 1],
+  ['Resolve reports and escrow disputes',  0, 0, 0, 1],
+  ['Suspend accounts',                     0, 0, 0, 1]
+];
+const PLACES = [
+  { name: 'Runda', x: 60, y: 9 }, { name: 'Westlands', x: 38, y: 24 }, { name: 'Lavington', x: 20, y: 31 },
+  { name: 'Kileleshwa', x: 34, y: 33 }, { name: 'Kilimani', x: 37, y: 41 }, { name: 'CBD', x: 52, y: 34 },
+  { name: 'Karen', x: 16, y: 54 }, { name: 'Embakasi', x: 76, y: 44 }, { name: 'Kitengela', x: 82, y: 60 }, { name: 'Ruiru', x: 86, y: 10 }
+];
+const COMMISSION = 0.05;
+const LISTING_LIMIT = 3;           // per account per 24 hours
+const MSG_BURST = { n: 6, ms: 30000 };
+const H = 3600e3, now = Date.now();
+
+/* ---------- Seed state ---------- */
+function seed() {
+  return {
+    me: 'u1',
+    users: {
+      u1: { id: 'u1', name: 'Amina Odhiambo', role: 'buyer',  verified: true,  phone: '+254 7•• ••• 214', idNo: '•••• 4471' },
+      u5: { id: 'u5', name: 'Brian Otieno',   role: 'buyer',  verified: false },
+      u2: { id: 'u2', name: 'Joseph Mwangi',  role: 'seller', verified: true,  phone: '+254 7•• ••• 908', idNo: '•••• 1180' },
+      u3: { id: 'u3', name: 'Wanjiru Kamau',  role: 'agent',  verified: true,  phone: '+254 7•• ••• 552', idNo: '•••• 3093', license: 'EARB/AG/2291' },
+      u4: { id: 'u4', name: 'Grace Njeri',    role: 'admin',  verified: true }
+    },
+    listings: [
+      L('l1', 'rent', '2-bed apartment with balcony', 85000, 'KES', 'Kilimani', 37.5, 40, 96, 'sqm', 2, 'Lease authority letter from owner', 'u2', 'approved', ['a1', 'a2', 'a3'], 30),
+      L('l2', 'sale', 'Family house on half-acre', 48500000, 'KES', 'Karen', 15, 52, 0.5, 'acres', 4, 'Freehold title deed', 'u2', 'approved', ['h1', 'h2', 'h3', 'h4'], 72),
+      L('l3', 'land', 'Quarter-acre plot near bypass', 6200000, 'KES', 'Ruiru', 85, 12, 0.25, 'acres', 0, 'Freehold title deed', 'u3', 'approved', ['l1', 'l2'], 120, 'Peter Kariuki'),
+      L('l4', 'rent', 'Studio, walk to Westlands', 42000, 'KES', 'Westlands', 39, 22, 38, 'sqm', 1, 'Lease authority letter from owner', 'u3', 'approved', ['a4', 'a5'], 50, 'Mercy Achieng'),
+      L('l5', 'sale', '3-bed townhouse in gated court', 23800000, 'KES', 'Lavington', 24, 30, 210, 'sqm', 3, 'Leasehold title (99 yrs, 71 left)', 'u2', 'approved', ['h5', 'h6', 'a6'], 200),
+      L('l6', 'land', '5-acre agricultural parcel', 14000000, 'KES', 'Kitengela', 83, 58, 5, 'acres', 0, 'Freehold title deed', 'u3', 'approved', ['l3', 'l4', 'l5'], 260, 'Samuel Ole Sankale'),
+      L('l7', 'sale', '4-bed villa with garden', 61000000, 'KES', 'Runda', 61, 10, 0.75, 'acres', 4, 'Freehold title deed', 'u3', 'pending', ['h7', 'h2'], 3, 'Daniel Mutua'),
+      L('l8', 'land', '1-acre plot, ready title', 3100000, 'KES', 'Embakasi', 75, 45, 1, 'acres', 0, 'None provided', 'u3', 'pending', ['l6'], 1, 'Unknown')
+    ],
+    threads: [
+      { id: 't1', listingId: 'l1', a: 'u1', b: 'u2', messages: [
+        { from: 'u1', text: 'Hello, is the Kilimani apartment still available from November?', t: now - 26 * H },
+        { from: 'u2', text: 'Yes it is. Water is included, power is prepaid token.', t: now - 25 * H },
+        { from: 'u1', offer: { amount: 80000, status: 'declined' }, t: now - 24 * H },
+        { from: 'u2', offer: { amount: 85000, status: 'accepted' }, t: now - 23 * H },
+        { sys: 'Offer of KES 85,000 / month accepted. Amina can now pay into escrow.', t: now - 23 * H }
+      ] },
+      { id: 't2', listingId: 'l2', a: 'u1', b: 'u2', messages: [
+        { from: 'u1', text: 'Can I view the Karen house this Saturday?', t: now - 5 * H },
+        { from: 'u2', text: 'Saturday 10am works. I will share the gate pin here on the day.', t: now - 4 * H }
+      ] }
+    ],
+    txns: [
+      { id: 'ESC-20481', listingId: 'l1', buyer: 'u1', seller: 'u2', kind: 'rent', amount: 170000, currency: 'KES', method: 'M-Pesa', status: 'held',
+        viewing: { buyer: true, seller: true }, handover: { buyer: false, seller: false },
+        log: [[now - 22 * H, 'KES 170,000 received via M-Pesa (first month + 1 month deposit).'], [now - 22 * H, 'Joseph Mwangi notified.'], [now - 6 * H, 'Viewing confirmed by both sides.']] }
+    ],
+    reports: [
+      { id: 'r1', listingId: 'l4', by: 'u1', reason: 'Asked to pay a "booking fee" outside the app', t: now - 8 * H, status: 'open' }
+    ],
+    notes: { u2: [{ t: now - 22 * H, text: 'Amina Odhiambo paid KES 170,000 into escrow for the Kilimani apartment.' }] },
+    rate: {}, selected: null, view: 'browse', filter: 'all', thread: 't1', adminTab: 'queue', drawer: false, draft: null
+  };
+  function L(id, type, title, price, currency, place, x, y, size, unit, beds, titleStatus, ownerId, status, photos, ageH, clientOwner) {
+    return { id, type, title, price, currency, place, x, y, size, unit, beds, titleStatus, ownerId, status, photos, created: now - ageH * H,
+      proof: titleStatus === 'None provided' ? null : { file: (type === 'rent' ? 'lease-authority-' : 'title-') + id + '.pdf' }, clientOwner: clientOwner || null };
+  }
+}
+
+const KEY = 'noble-proto-v1';
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
+if (!S || !S.users) S = seed();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (n, c) => `${c} ${Math.round(n).toLocaleString('en-US')}`;
+const me = () => S.users[S.me];
+const user = id => S.users[id];
+const listing = id => S.listings.find(l => l.id === id);
+const initials = n => n.split(' ').map(p => p[0]).slice(0, 2).join('');
+const ago = t => { const m = Math.round((Date.now() - t) / 60000); if (m < 1) return 'just now'; if (m < 60) return m + 'm ago'; const h = Math.round(m / 60); return h < 48 ? h + 'h ago' : Math.round(h / 24) + 'd ago'; };
+const typeLabel = { sale: 'For sale', rent: 'For rent', land: 'Land' };
+function toast(text, bad) { const el = document.createElement('div'); el.className = 'toast' + (bad ? ' bad' : ''); el.textContent = text; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); }
+function notify(uid, text) { (S.notes[uid] = S.notes[uid] || []).unshift({ t: Date.now(), text }); }
+function depositFor(l, price) { return l.type === 'rent' ? price * 2 : Math.round(price * 0.1); }
+function agreedPrice(l, buyerId) {
+  const th = S.threads.find(t => t.listingId === l.id && t.a === buyerId);
+  const acc = th && [...th.messages].reverse().find(m => m.offer && m.offer.status === 'accepted');
+  return acc ? acc.offer.amount : l.price;
+}
+
+/* Generated photos: each id is a stable illustration, so duplicate detection can compare ids like a perceptual hash would */
+function hash(s) { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
+function photo(id) {
+  const h = hash(id), k = id[0];
+  const sky = ['#9cc3d6', '#e8c9a0', '#b9cfe0', '#d7b9c9', '#a9d1c4'][h % 5];
+  const ground = k === 'l' ? ['#8aa35c', '#a59253', '#7c9a4f'][h % 3] : '#7d9467';
+  const wall = ['#efe6d6', '#d9cbb5', '#c9d3d6', '#e7d2c0', '#f2efe8'][(h >> 3) % 5];
+  const roof = ['#7a3e2e', '#3f4a52', '#5d4a3a', '#8b5a2b'][(h >> 5) % 4];
+  let body = '';
+  if (k === 'h') {
+    const w = 60 + (h >> 7) % 30, x = 80 - w / 2;
+    body = `<rect x="${x}" y="48" width="${w}" height="34" fill="${wall}"/><polygon points="${x - 6},50 80,${26 + (h >> 9) % 8} ${x + w + 6},50" fill="${roof}"/><rect x="${x + 8}" y="56" width="12" height="10" fill="#4d6b7a"/><rect x="${x + w - 20}" y="56" width="12" height="10" fill="#4d6b7a"/><rect x="76" y="62" width="10" height="20" fill="${roof}"/><circle cx="${x - 14}" cy="66" r="10" fill="#4f7a43"/>`;
+  } else if (k === 'a') {
+    const fl = 3 + (h >> 7) % 4, top = 82 - fl * 12;
+    body = `<rect x="52" y="${top}" width="56" height="${fl * 12}" fill="${wall}"/>`;
+    for (let i = 0; i < fl; i++) for (let j = 0; j < 4; j++) body += `<rect x="${57 + j * 13}" y="${top + 3 + i * 12}" width="8" height="7" fill="${(i + j + h) % 3 ? '#4d6b7a' : '#f5d58a'}"/>`;
+    body += `<rect x="30" y="60" width="18" height="22" fill="${roof}" opacity=".5"/><rect x="114" y="54" width="20" height="28" fill="${roof}" opacity=".4"/>`;
+  } else {
+    body = `<path d="M0 64 Q40 ${54 + h % 8} 80 62 T160 58 V100 H0Z" fill="${ground}" opacity=".85"/><line x1="20" y1="72" x2="140" y2="70" stroke="#f3ead0" stroke-dasharray="4 3"/><rect x="${24 + h % 90}" y="62" width="2" height="14" fill="#5d4a3a"/><circle cx="${120 - h % 40}" cy="56" r="9" fill="#4f7a43"/><circle cx="${40 + h % 30}" cy="58" r="6" fill="#4f7a43"/>`;
+  }
+  return `<svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Listing photo ${esc(id)}"><rect width="160" height="100" fill="${sky}"/><circle cx="${130 - h % 90}" cy="20" r="8" fill="#fff3c4" opacity=".8"/><rect y="78" width="160" height="22" fill="${ground}"/>${body}</svg>`;
+}
+const PHOTO_LIB = ['h1','h2','h3','h4','h5','h6','h7','h8','a1','a2','a3','a4','a5','a6','a7','l1','l2','l3','l4','l5','l6','l7'];
+function duplicatesOf(photos, exceptId) {
+  const hits = [];
+  for (const l of S.listings) if (l.id !== exceptId && l.status !== 'rejected') for (const p of photos) if (l.photos.includes(p)) hits.push({ p, l });
+  return hits;
+}
+
+/* ---------- Gates ---------- */
+function gate(action) {
+  const u = me();
+  if (u.suspended) { toast('This account is suspended. Contact support to appeal.', true); return false; }
+  if (u.role === 'admin') return true;
+  if (!u.verified) { openVerify(action); return false; }
+  return true;
+}
+
+/* ---------- Map ---------- */
+function mapSVG(opts = {}) {
+  const pins = (opts.listings || []).map(l => {
+    const sel = S.selected === l.id;
+    return `<g class="pin" data-act="select" data-id="${l.id}" tabindex="0" role="button" aria-label="${esc(l.title)}, ${esc(l.place)}">
+      <circle cx="${l.x}" cy="${l.y}" r="${sel ? 3.2 : 2.3}" fill="var(--${l.type})" stroke="var(--surface)" stroke-width=".8"/>
+      ${sel ? `<circle cx="${l.x}" cy="${l.y}" r="5" fill="none" stroke="var(--${l.type})" stroke-width=".5"/>` : ''}</g>`;
+  }).join('');
+  const draft = opts.draft ? `<g><circle cx="${opts.draft.x}" cy="${opts.draft.y}" r="2.6" fill="var(--accent)" stroke="var(--surface)" stroke-width=".8"/><circle cx="${opts.draft.x}" cy="${opts.draft.y}" r="5" fill="none" stroke="var(--accent)" stroke-width=".4" stroke-dasharray="1 1"/></g>` : '';
+  return `<svg class="map" viewBox="0 0 100 66" ${opts.pick ? 'data-act="pick" style="cursor:crosshair"' : ''} aria-label="Map of Nairobi area">
+    <rect width="100" height="66" fill="var(--map-land)"/>
+    <path d="M0 47 C18 44 30 48 44 45 S70 40 100 36" stroke="var(--map-water)" stroke-width="2.2" fill="none"/>
+    <path d="M47 0 C49 18 53 26 52 34 S58 50 62 66" stroke="var(--map-road)" stroke-width="1.4" fill="none"/>
+    <path d="M0 30 C20 31 40 36 52 34 S80 28 100 22" stroke="var(--map-road)" stroke-width="1.4" fill="none"/>
+    <path d="M52 34 L80 46 L92 66" stroke="var(--map-road)" stroke-width="1" fill="none"/>
+    <path d="M52 34 L70 18 L100 6" stroke="var(--map-road)" stroke-width="1" fill="none"/>
+    <path d="M10 66 C14 56 22 46 36 40" stroke="var(--map-road)" stroke-width=".8" fill="none"/>
+    ${PLACES.map(p => `<text x="${p.x}" y="${p.y + 5.5}" font-size="2.4" text-anchor="middle">${p.name}</text>`).join('')}
+    <text x="97" y="63" font-size="2.2" text-anchor="end">N ↑  ·  1 unit ≈ 0.6 km</text>
+    ${pins}${draft}</svg>`;
+}
+function nearestPlace(x, y) { return PLACES.reduce((b, p) => (Math.hypot(p.x - x, p.y - y) < Math.hypot(b.x - x, b.y - y) ? p : b)).name; }
+
+/* ---------- Chrome ---------- */
+function renderChrome() {
+  const u = me();
+  const notes = S.notes[u.id] || [];
+  const unread = notes.filter(n => !n.read).length;
+  $('#who').innerHTML = `
+    <span class="label">Viewing as</span>
+    <select id="as" aria-label="Switch demo account">${Object.values(S.users).map(x => `<option value="${x.id}" ${x.id === u.id ? 'selected' : ''}>${esc(x.name)} · ${ROLES[x.role].label}</option>`).join('')}</select>
+    ${u.verified ? '<span class="pill ok">✓ ID & phone verified</span>' : '<button class="pill warn" data-act="verify" style="border:0;cursor:pointer">Unverified · verify now</button>'}
+    ${u.suspended ? '<span class="pill bad">Suspended</span>' : ''}
+    <span style="position:relative"><button class="bell" data-act="drawer" aria-label="Notifications">Alerts ${unread ? `<i>${unread}</i>` : ''}</button>
+    ${S.drawer ? `<div class="drawer">${notes.length ? notes.slice(0, 8).map(n => `<div>${esc(n.text)}<br><span class="muted small">${ago(n.t)}</span></div>`).join('') : '<span class="muted small">No alerts yet.</span>'}</div>` : ''}</span>
+    <button class="btn ghost small" data-act="reset">Reset demo</button>`;
+  const tabs = [['browse', 'Browse']];
+  if (u.role === 'seller' || u.role === 'agent') tabs.push(['sell', 'My listings', S.listings.filter(l => l.ownerId === u.id).length]);
+  if (u.role !== 'admin') tabs.push(['messages', 'Messages', S.threads.filter(t => t.a === u.id || t.b === u.id).length]);
+  tabs.push(['escrow', 'Escrow', myTxns().length]);
+  if (u.role === 'admin') tabs.push(['admin', 'Moderation', S.listings.filter(l => l.status === 'pending').length + S.reports.filter(r => r.status === 'open').length + S.txns.filter(t => t.status === 'disputed').length]);
+  tabs.push(['blueprint', 'Blueprint']);
+  if (!tabs.some(t => t[0] === S.view) && S.view !== 'listing') S.view = 'browse';
+  $('#tabs').innerHTML = tabs.map(([k, n, c]) => `<button class="tab" data-act="go" data-view="${k}" ${S.view === k || (S.view === 'listing' && k === 'browse') ? 'aria-current="page"' : ''}>${n}${c ? `<span class="ct">${c}</span>` : ''}</button>`).join('');
+}
+function myTxns() { const u = me(); return u.role === 'admin' ? S.txns : S.txns.filter(t => t.buyer === u.id || t.seller === u.id); }
+
+/* ---------- Views ---------- */
+function vBrowse() {
+  const live = S.listings.filter(l => l.status === 'approved');
+  const shown = live.filter(l => S.filter === 'all' || l.type === S.filter);
+  return `<div class="page-head"><div><h2>Homes and land around Nairobi</h2><p class="muted">${live.length} approved listings · every owner ID-verified · deposits held in escrow</p></div></div>
+  <div class="browse">
+    <div class="mapbox">${mapSVG({ listings: shown })}
+      <div class="legend"><span style="color:var(--sale)">Sale</span><span style="color:var(--rent)">Rent</span><span style="color:var(--land)">Land</span><span class="muted">Tap a pin to highlight a listing</span></div></div>
+    <div>
+      <div class="filters" role="group" aria-label="Listing type">${['all', 'sale', 'rent', 'land'].map(f => `<button class="chip" data-act="filter" data-f="${f}" aria-pressed="${S.filter === f}">${f === 'all' ? 'All' : typeLabel[f]}</button>`).join('')}</div>
+      <div class="ledger">${shown.map(card).join('') || '<div class="empty">No listings of this type yet.</div>'}</div>
+    </div>
+  </div>`;
+}
+function card(l) {
+  const o = user(l.ownerId);
+  return `<button class="lcard ${S.selected === l.id ? 'hl' : ''}" data-act="open" data-id="${l.id}">
+    <div class="ph">${photo(l.photos[0])}</div>
+    <div class="lmeta">
+      <div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span><span class="small muted">${esc(l.place)}</span></div>
+      <h3>${esc(l.title)}</h3>
+      <div class="price">${money(l.price, l.currency)}${l.type === 'rent' ? ' <small>/ month</small>' : ''}</div>
+      <div class="facts"><span>${l.size} ${l.unit}</span>${l.beds ? `<span>${l.beds} bed</span>` : ''}<span>${esc(l.titleStatus)}</span></div>
+      <div class="small muted">${esc(o.name)} · ${ROLES[o.role].label} ${o.verified ? '<span class="pill ok">verified</span>' : ''}</div>
+    </div></button>`;
+}
+
+function vListing() {
+  const l = listing(S.selected);
+  if (!l) { S.view = 'browse'; return vBrowse(); }
+  const u = me(), o = user(l.ownerId), mine = l.ownerId === u.id;
+  const idx = S.photoIdx || 0;
+  const price = agreedPrice(l, u.id);
+  const dep = depositFor(l, price);
+  const open = S.txns.find(t => t.listingId === l.id && t.buyer === u.id && t.status !== 'refunded');
+  let actions;
+  if (u.role === 'admin') actions = `<p class="muted small">Admins moderate listings from the Moderation tab.</p>`;
+  else if (mine) actions = `<div class="notice">This is your listing. Status: <b>${l.status}</b>.</div>`;
+  else actions = `
+    <button class="btn" data-act="message" data-id="${l.id}">Message ${esc(o.name.split(' ')[0])}</button>
+    <form class="row" data-form="offer" data-id="${l.id}">
+      <label class="field" style="flex:1;min-width:140px"><span>Your offer (${l.currency}${l.type === 'rent' ? ' / month' : ''})</span><input id="offer-amt" name="amt" type="number" min="1" step="1000" value="${Math.round(l.price * 0.95)}"></label>
+      <button class="btn" style="align-self:end">Send offer</button></form>
+    <div class="notice escrow"><b>${l.type === 'rent' ? 'First month + 1 month deposit' : '10% deposit'}:</b> <span class="mono">${money(dep, l.currency)}</span>${price !== l.price ? ` <span class="small">(based on accepted offer of ${money(price, l.currency)})</span>` : ''}<br><span class="small">Held by Noble until you confirm the viewing and handover. Refunded if the deal falls through.</span></div>
+    ${open ? `<button class="btn" data-act="go" data-view="escrow">View escrow ${open.id}</button>` : `<button class="btn escrow" data-act="pay" data-id="${l.id}">Pay into escrow</button>`}
+    <button class="btn ghost danger small" data-act="report" data-id="${l.id}">Report this listing</button>`;
+  return `<div class="row" style="margin-bottom:12px"><button class="btn ghost" data-act="go" data-view="browse">← All listings</button></div>
+  <div class="detail">
+    <div class="stack">
+      <div class="gallery">${photo(l.photos[idx] || l.photos[0])}</div>
+      <div class="thumbs">${l.photos.map((p, i) => `<button data-act="ph" data-i="${i}" aria-current="${i === idx}" aria-label="Photo ${i + 1}">${photo(p)}</button>`).join('')}</div>
+      <div class="panel stack">
+        <div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span><span class="mono small muted">REF ${l.id.toUpperCase()}-${(hash(l.id) % 9000 + 1000)}</span></div>
+        <h2>${esc(l.title)}</h2>
+        <div class="price" style="font-size:1.4rem">${money(l.price, l.currency)}${l.type === 'rent' ? ' <small>/ month</small>' : ''}</div>
+        <dl class="kv">
+          <dt>Location</dt><dd>${esc(l.place)}, Nairobi · pin <span class="mono small">${(-1.2 - l.y / 300).toFixed(4)}, ${(36.7 + l.x / 400).toFixed(4)}</span></dd>
+          <dt>Size</dt><dd>${l.size} ${l.unit}${l.beds ? ` · ${l.beds} bedroom${l.beds > 1 ? 's' : ''}` : ''}</dd>
+          <dt>Title status</dt><dd>${esc(l.titleStatus)}</dd>
+          <dt>Ownership proof</dt><dd>${l.proof ? `<span class="pill ok">✓ Checked by Noble</span> <span class="small muted mono">${esc(l.proof.file)}</span>` : '<span class="pill bad">Missing</span>'}</dd>
+          <dt>Listed</dt><dd>${ago(l.created)}</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel stack">
+        <div class="label">Listed by</div>
+        <div class="owner"><div class="avatar">${initials(o.name)}</div><div><b>${esc(o.name)}</b><div class="small muted">${ROLES[o.role].label}${o.license ? ` · licence <span class="mono">${o.license}</span>` : ''}</div></div></div>
+        <div class="row">${o.verified ? '<span class="pill ok">✓ National ID</span><span class="pill ok">✓ Phone</span>' : '<span class="pill warn">Not verified</span>'}</div>
+        ${l.clientOwner ? `<p class="small muted">Listing on behalf of registered owner <b>${esc(l.clientOwner)}</b>.</p>` : ''}
+      </div>
+      <div class="panel stack">${actions}</div>
+      <div class="panel" style="padding:10px">${mapSVG({ listings: [l] })}</div>
+      ${l.type !== 'rent' ? '<p class="small muted">Full sale and land transfers complete offline at the Lands Registry. Noble escrows the deposit and records the signed agreement.</p>' : ''}
+    </div>
+  </div>`;
+}
+
+function vSell() {
+  const u = me();
+  const mine = S.listings.filter(l => l.ownerId === u.id).sort((a, b) => b.created - a.created);
+  const d = S.draft || (S.draft = { type: 'sale', photos: [], x: null, y: null });
+  const recent = (S.rate[u.id] || []).filter(t => Date.now() - t < 24 * H).length;
+  const dups = duplicatesOf(d.photos);
+  const needsProof = d.type !== 'rent';
+  return `<div class="page-head"><div><h2>My listings</h2><p class="muted">New listings wait in a review queue until an admin approves them.</p></div></div>
+  <div class="detail">
+    <form class="panel stack" data-form="listing">
+      <h3>New listing</h3>
+      ${!u.verified ? '<div class="notice warn">Verify your ID and phone before you can submit a listing.</div>' : ''}
+      ${recent >= LISTING_LIMIT ? `<div class="notice bad">You have submitted ${recent} listings in 24 hours, the limit for one account. Try again tomorrow.</div>` : `<div class="small muted">${LISTING_LIMIT - recent} of ${LISTING_LIMIT} submissions left today.</div>`}
+      <div class="grid2">
+        <label class="field"><span>Type</span><select id="f-type" name="type" data-act-change="dtype">${['sale', 'rent', 'land'].map(t => `<option value="${t}" ${d.type === t ? 'selected' : ''}>${typeLabel[t]}</option>`).join('')}</select></label>
+        <label class="field"><span>Title</span><input id="f-title" name="title" required maxlength="70" placeholder="e.g. 3-bed bungalow with parking" value="${esc(d.title || '')}"></label>
+        <label class="field"><span>Price${d.type === 'rent' ? ' per month' : ''}</span><input id="f-price" name="price" type="number" min="1" required value="${esc(d.price || '')}"></label>
+        <label class="field"><span>Currency</span><select id="f-cur" name="currency">${['KES', 'UGX', 'TZS', 'USD'].map(c => `<option ${d.currency === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label class="field"><span>Size</span><input id="f-size" name="size" type="number" min="0" step="any" required value="${esc(d.size || '')}"></label>
+        <label class="field"><span>Unit</span><select id="f-unit" name="unit">${['sqm', 'acres'].map(c => `<option ${d.unit === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+        ${d.type !== 'land' ? `<label class="field"><span>Bedrooms</span><input id="f-beds" name="beds" type="number" min="0" value="${esc(d.beds ?? '')}"></label>` : ''}
+        <label class="field"><span>Title / ownership status</span><select id="f-ts" name="titleStatus">${['Freehold title deed', 'Leasehold title', 'Lease authority letter from owner', 'Title in process (allotment letter)'].map(c => `<option ${d.titleStatus === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+      </div>
+      ${u.role === 'agent' ? `<label class="field"><span>Registered owner you represent</span><input id="f-client" name="client" required value="${esc(d.client || '')}"><span class="hint">Must match the name on the title deed or lease authority.</span></label>` : ''}
+      <div class="field"><span>Exact location <span class="hint">Click the map to drop a pin</span></span>${mapSVG({ pick: true, draft: d.x != null ? d : null })}
+        <span class="hint">${d.x != null ? `Pinned near <b>${nearestPlace(d.x, d.y)}</b>` : 'No pin yet'}</span></div>
+      <div class="field"><span>Photos <span class="hint">Pick up to 5 from your uploads</span></span>
+        <div class="pickgrid">${PHOTO_LIB.map(p => `<button type="button" data-act="pickph" data-p="${p}" aria-pressed="${d.photos.includes(p)}" aria-label="Photo ${p}">${photo(p)}</button>`).join('')}</div>
+        ${dups.length ? `<div class="notice warn">Duplicate photo detected: ${dups.map(x => `<b>${x.p}</b> already appears on “${esc(x.l.title)}”`).join('; ')}. You can still submit, but the listing will be flagged for the admin.</div>` : ''}
+      </div>
+      <label class="field"><span>Proof of ownership ${needsProof ? '<span class="pill bad">required</span>' : '<span class="pill">recommended</span>'}</span>
+        <input id="f-proof" name="proof" type="file" accept=".pdf,image/*">${d.proofName ? `<span class="pill ok">Attached: ${esc(d.proofName)}</span>` : ''}<span class="hint">${needsProof ? 'Upload the title deed or official search. Admins check it against the registry before approval.' : 'A lease authority letter from the owner speeds up approval.'}</span></label>
+      <div class="row"><button class="btn primary" ${recent >= LISTING_LIMIT ? 'disabled' : ''}>Submit for review</button><span class="small muted">Goes live after admin approval.</span></div>
+    </form>
+    <div class="stack">
+      <h3>Submitted</h3>
+      ${mine.map(l => `<div class="panel" style="padding:10px"><div class="row" style="justify-content:space-between"><b>${esc(l.title)}</b>${statusPill(l)}</div>
+        <div class="small muted">${typeLabel[l.type]} · ${esc(l.place)} · <span class="mono">${money(l.price, l.currency)}</span> · ${ago(l.created)}</div>
+        ${l.rejectReason ? `<div class="notice bad small" style="margin-top:6px">Rejected: ${esc(l.rejectReason)}</div>` : ''}
+        ${l.status === 'approved' ? `<button class="btn ghost small" data-act="open" data-id="${l.id}">View live listing</button>` : ''}</div>`).join('') || '<div class="empty">Nothing submitted yet.</div>'}
+    </div>
+  </div>`;
+}
+function statusPill(l) { return { approved: '<span class="pill ok">Live</span>', pending: '<span class="pill warn">Pending review</span>', rejected: '<span class="pill bad">Rejected</span>', removed: '<span class="pill bad">Taken down</span>' }[l.status]; }
+
+function vMessages() {
+  const u = me();
+  const ths = S.threads.filter(t => t.a === u.id || t.b === u.id);
+  if (!ths.length) return `<div class="page-head"><h2>Messages</h2></div><div class="empty">No conversations yet. Open a listing and message the owner. All chat and offers stay here so there is a record if a dispute comes up.</div>`;
+  const th = ths.find(t => t.id === S.thread) || ths[0];
+  S.thread = th.id;
+  const l = listing(th.listingId), other = user(th.a === u.id ? th.b : th.a);
+  const bubbles = th.messages.map((m, i) => {
+    if (m.sys) return `<div class="sys">${esc(m.sys)}</div>`;
+    const mineMsg = m.from === u.id;
+    if (m.offer) {
+      const canAnswer = !mineMsg && m.offer.status === 'pending';
+      return `<div class="msg offer ${mineMsg ? 'me' : ''}"><div class="label">Offer${l.type === 'rent' ? ' / month' : ''}</div><div class="price">${money(m.offer.amount, l.currency)}</div>
+        <div class="row small">${{ pending: '<span class="pill warn">Awaiting reply</span>', accepted: '<span class="pill ok">Accepted</span>', declined: '<span class="pill">Declined</span>' }[m.offer.status]}
+        ${canAnswer ? `<button class="btn small" data-act="offerans" data-i="${i}" data-ans="accepted">Accept</button><button class="btn ghost small" data-act="offerans" data-i="${i}" data-ans="declined">Decline</button>` : ''}</div>
+        <div class="t">${esc(user(m.from).name.split(' ')[0])} · ${ago(m.t)}</div></div>`;
+    }
+    return `<div class="msg ${mineMsg ? 'me' : ''}">${esc(m.text)}<div class="t">${mineMsg ? 'You' : esc(other.name.split(' ')[0])} · ${ago(m.t)}</div></div>`;
+  }).join('');
+  return `<div class="page-head"><div><h2>Messages</h2><p class="muted">Phone numbers and emails are hidden in chat. Keep payments in-app so escrow protects you.</p></div></div>
+  <div class="chat">
+    <div class="threads">${ths.map(t => { const tl = listing(t.listingId), ou = user(t.a === u.id ? t.b : t.a), last = t.messages[t.messages.length - 1];
+      return `<button class="thread" data-act="thread" data-id="${t.id}" aria-current="${t.id === th.id}"><b>${esc(ou.name)}</b><div class="small muted">${esc(tl.title)}</div><div class="small muted">${ago(last.t)}</div></button>`; }).join('')}</div>
+    <section class="convo">
+      <header class="row" style="justify-content:space-between"><div><b>${esc(other.name)}</b> <span class="small muted">· ${esc(l.title)}</span></div><button class="btn ghost small" data-act="open" data-id="${l.id}">Open listing</button></header>
+      <div class="msgs" id="msgs">${bubbles}</div>
+      <div class="composer">
+        <form data-form="msg"><input id="msg-text" name="text" autocomplete="off" placeholder="Write a message"><button class="btn primary">Send</button></form>
+        <form data-form="offer" data-id="${l.id}" class="row"><input id="msg-offer" name="amt" type="number" min="1" step="1000" placeholder="Offer amount (${l.currency})" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)"><button class="btn">Send offer</button></form>
+      </div>
+    </section>
+  </div>`;
+}
+
+function vEscrow() {
+  const u = me(), list = myTxns();
+  return `<div class="page-head"><div><h2>Escrow</h2><p class="muted">Money is held by Noble until both sides confirm the viewing and the handover. Commission is ${COMMISSION * 100}% on release.</p></div></div>
+  <div class="stack">${list.map(t => txnCard(t, u)).join('') || '<div class="empty">No escrow payments yet. Open a listing and choose “Pay into escrow”.</div>'}</div>`;
+}
+function txnCard(t, u) {
+  const l = listing(t.listingId), b = user(t.buyer), s = user(t.seller);
+  const isB = u.id === t.buyer, isS = u.id === t.seller;
+  const fee = t.amount * COMMISSION;
+  const v = t.viewing.buyer && t.viewing.seller, h = t.handover.buyer && t.handover.seller;
+  const steps = [['Paid into escrow', true], ['Seller notified', true], ['Viewing confirmed', v], ['Handover confirmed', h],
+    [t.status === 'refunded' ? 'Refunded to buyer' : 'Released to seller', t.status === 'released' || t.status === 'refunded']];
+  const pill = { held: '<span class="pill escrow">Held in escrow</span>', disputed: '<span class="pill warn">Refund requested</span>', released: '<span class="pill ok">Released</span>', refunded: '<span class="pill bad">Refunded</span>' }[t.status];
+  const conf = (stage, side, who) => {
+    const on = t[stage][side], can = t.status === 'held' && !on && ((side === 'buyer' && isB) || (side === 'seller' && isS)) && (stage === 'viewing' || v);
+    return `<div class="confirm ${on ? 'on' : ''}"><span class="dot"></span><span style="flex:1">${who} ${stage === 'viewing' ? 'confirms viewing' : 'confirms handover'}</span>${can ? `<button class="btn small" data-act="confirm" data-id="${t.id}" data-stage="${stage}" data-side="${side}">Confirm</button>` : on ? '<span class="small yes">done</span>' : ''}</div>`;
+  };
+  let acts = '';
+  if (t.status === 'held' && (isB || isS)) acts += `<button class="btn ghost danger" data-act="refundreq" data-id="${t.id}">${isB ? 'Deal fell through · request refund' : 'Cancel deal · refund buyer'}</button>`;
+  if (t.status === 'disputed' && isS && t.disputeBy === 'buyer') acts += `<button class="btn" data-act="resolve" data-id="${t.id}" data-out="refunded">Agree to refund</button>`;
+  if (t.status === 'disputed' && u.role === 'admin') acts += `<button class="btn" data-act="resolve" data-id="${t.id}" data-out="refunded">Refund buyer</button><button class="btn escrow" data-act="resolve" data-id="${t.id}" data-out="released">Release to seller</button>`;
+  return `<article class="panel stack">
+    <div class="row" style="justify-content:space-between"><div><span class="mono small muted">${t.id}</span><h3>${esc(l.title)}</h3><div class="small muted">${esc(b.name)} → ${esc(s.name)} · ${t.method} · ${t.kind === 'rent' ? 'rent + deposit' : '10% deposit'}</div></div>${pill}</div>
+    <ol class="steps">${steps.map(([n, d], i) => `<li class="${d ? (i === 4 && t.status === 'refunded' ? 'done fail' : 'done') : ''}">${n}</li>`).join('')}</ol>
+    <div class="split"><div><span class="label">Held</span><b>${money(t.amount, t.currency)}</b></div><div><span class="label">Noble commission ${COMMISSION * 100}%</span><b>${money(fee, t.currency)}</b></div><div><span class="label">Seller receives</span><b>${money(t.amount - fee, t.currency)}</b></div></div>
+    ${t.status === 'held' || t.status === 'disputed' ? `<div class="confirms">${conf('viewing', 'buyer', esc(b.name.split(' ')[0]))}${conf('viewing', 'seller', esc(s.name.split(' ')[0]))}${conf('handover', 'buyer', esc(b.name.split(' ')[0]))}${conf('handover', 'seller', esc(s.name.split(' ')[0]))}</div>` : ''}
+    ${t.status === 'released' && l.type !== 'rent' ? `<div class="notice escrow small">Agreement <span class="mono">${t.agreement}</span> recorded. Legal transfer of title completes offline at the Lands Registry; the balance is paid through the buyer's advocate.</div>` : ''}
+    ${acts ? `<div class="row">${acts}</div>` : ''}
+    <details><summary class="small muted" style="cursor:pointer">Activity log (${t.log.length})</summary><ol class="log">${t.log.map(([ts, x]) => `<li><span class="mono">${new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span> · ${esc(x)}</li>`).join('')}</ol></details>
+  </article>`;
+}
+
+function vAdmin() {
+  const pend = S.listings.filter(l => l.status === 'pending');
+  const reps = S.reports.filter(r => r.status === 'open');
+  const disp = S.txns.filter(t => t.status === 'disputed');
+  const sub = [['queue', 'Pending listings', pend.length], ['reports', 'Reports', reps.length], ['disputes', 'Escrow disputes', disp.length], ['users', 'Accounts', Object.keys(S.users).length]];
+  let body = '';
+  if (S.adminTab === 'queue') body = pend.map(l => {
+    const o = user(l.ownerId), d = duplicatesOf(l.photos, l.id);
+    const proofOk = !!l.proof || l.type === 'rent';
+    return `<article class="panel qcard"><div class="ph" style="aspect-ratio:4/3;border-radius:6px;overflow:hidden">${photo(l.photos[0])}</div>
+      <div class="stack" style="gap:6px"><div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span><span class="small muted">submitted ${ago(l.created)}</span></div><h3>${esc(l.title)}</h3>
+        <div class="small muted">${esc(l.place)} · <span class="mono">${money(l.price, l.currency)}</span> · ${l.size} ${l.unit} · by ${esc(o.name)} (${ROLES[o.role].label})${l.clientOwner ? ` for ${esc(l.clientOwner)}` : ''}</div>
+        <ul class="checks">
+          <li>${o.verified ? '<span class="yes">✓</span> Lister ID and phone verified' : '<span class="no">✗</span> Lister not verified'}</li>
+          <li>${proofOk ? `<span class="yes">✓</span> Proof of ownership: <span class="mono">${esc(l.proof ? l.proof.file : 'not required for rent')}</span>` : '<span style="color:var(--bad)">✗</span> No proof of ownership attached (required for sale and land)'}</li>
+          <li>${d.length ? `<span style="color:var(--warn)">!</span> ${d.length} photo${d.length > 1 ? 's' : ''} match other listings: ${d.map(x => `“${esc(x.l.title)}”`).join(', ')}` : '<span class="yes">✓</span> No duplicate photos found'}</li>
+          <li>${l.x != null ? '<span class="yes">✓</span> Location pinned' : '<span class="no">✗</span> No map pin'}</li>
+        </ul></div>
+      <div class="stack" style="gap:6px;min-width:150px"><button class="btn primary" data-act="approve" data-id="${l.id}" ${proofOk && o.verified ? '' : 'disabled title="Missing a required check"'}>Approve</button>
+        <select id="rej-${l.id}" aria-label="Rejection reason" style="padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--bg)"><option>Missing proof of ownership</option><option>Duplicate or stolen photos</option><option>Price or details look misleading</option><option>Owner name does not match title</option></select>
+        <button class="btn danger" data-act="reject" data-id="${l.id}">Reject</button></div></article>`;
+  }).join('') || '<div class="empty">The review queue is empty.</div>';
+  if (S.adminTab === 'reports') body = reps.map(r => { const l = listing(r.listingId);
+    return `<article class="panel row" style="justify-content:space-between"><div><b>${esc(l.title)}</b> <span class="small muted">· reported by ${esc(user(r.by).name)} ${ago(r.t)}</span><p>“${esc(r.reason)}”</p><p class="small muted">Lister: ${esc(user(l.ownerId).name)}. Chat history is available for review.</p></div>
+      <div class="row"><button class="btn" data-act="dismiss" data-id="${r.id}">Dismiss</button><button class="btn danger" data-act="takedown" data-id="${r.id}">Take listing down</button></div></article>`; }).join('') || '<div class="empty">No open reports.</div>';
+  if (S.adminTab === 'disputes') body = disp.map(t => txnCard(t, me())).join('') || '<div class="empty">No escrow disputes.</div>';
+  if (S.adminTab === 'users') body = `<div class="panel tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Verification</th><th>Listings</th><th></th></tr></thead><tbody>${Object.values(S.users).map(x => `<tr><td>${esc(x.name)}</td><td>${ROLES[x.role].label}</td><td>${x.verified ? '<span class="pill ok">ID + phone</span>' : '<span class="pill warn">Unverified</span>'}</td><td class="num">${S.listings.filter(l => l.ownerId === x.id).length}</td><td>${x.role === 'admin' ? '' : `<button class="btn small ${x.suspended ? '' : 'danger'}" data-act="suspend" data-id="${x.id}">${x.suspended ? 'Reinstate' : 'Suspend'}</button>`}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="page-head"><div><h2>Moderation</h2><p class="muted">Nothing goes live, and no disputed money moves, without an admin decision.</p></div></div>
+  <div class="subtabs">${sub.map(([k, n, c]) => `<button class="chip" data-act="atab" data-t="${k}" aria-pressed="${S.adminTab === k}">${n} <span class="mono">${c}</span></button>`).join('')}</div>
+  <div class="stack">${body}</div>`;
+}
+
+function vBlueprint() {
+  return `<div class="page-head"><div><h2>Blueprint</h2><p class="muted">What this prototype demonstrates, and what the production build needs.</p></div></div>
+  <div class="bp">
+    <section class="panel stack"><h3>What each listing holds</h3><ul><li>Type: sale, rent or land</li><li>Price and currency (KES, UGX, TZS, USD)</li><li>Exact location pinned on a map</li><li>Photos, checked for duplicates</li><li>Size in sqm or acres, bedrooms</li><li>Title / ownership status and proof document</li><li>The verified owner or agent behind it</li></ul></section>
+    <section class="panel stack"><h3>Controls that keep it safe</h3><ul><li>ID and phone verification before listing or paying</li><li>Pending queue: admins approve before anything goes live</li><li>Title deed or lease authority required for sale and land</li><li>Chat and offers stay in-app; contact details are masked</li><li>Rate limits (${LISTING_LIMIT} listings a day, message bursts), duplicate-photo detection, user reports</li><li>Four roles with separate permissions</li></ul></section>
+    <section class="panel stack"><h3>Transaction flow</h3><ol><li>Buyer pays a deposit or rent into escrow by mobile money or card.</li><li>Seller is notified; both sides confirm viewing, then handover.</li><li>Noble releases funds minus ${COMMISSION * 100}% commission, or refunds if the deal falls through. Disputes go to an admin.</li><li>Sales and land transfers finish offline at the registry; escrow covers the deposit and Noble records the agreement.</li></ol></section>
+    <section class="panel stack"><h3>Suggested build</h3><ul><li>Mobile app (React Native or Flutter) plus a web dashboard</li><li>API backend with PostgreSQL + PostGIS for users, listings, transactions</li><li>Map provider for geocoding and pins</li><li>Escrow-capable payments: M-Pesa / mobile money and card</li><li>KYC provider for ID and liveness checks; SMS OTP</li><li>Admin tools for the queue, reports, disputes and suspensions</li></ul></section>
+    <section class="panel wide stack"><h3>Role permissions</h3><div class="tbl-wrap"><table><thead><tr><th>Action</th>${Object.values(ROLES).map(r => `<th class="c">${r.label}</th>`).join('')}</tr></thead><tbody>${PERMS.map(([a, ...v]) => `<tr><td>${a}</td>${v.map(x => `<td class="c ${x ? 'yes' : 'no'}">${x ? '✓' : '·'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <p class="small muted">Try it: switch accounts at the top. Brian is unverified, so paying or messaging asks him to verify first. Grace is the admin.</p></section>
+  </div>`;
+}
+
+/* ---------- Modals ---------- */
+function modal(html) { $('#modal').innerHTML = html ? `<div class="scrim" data-act="close-scrim"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>` : ''; const f = $('#modal input, #modal select, #modal button'); if (f) f.focus(); }
+function openVerify(after) {
+  S.pendingAfter = after;
+  modal(`<h3>Verify your account</h3><p class="muted small">Every account confirms a national ID and a phone number before it can list, message or pay. This keeps scammers out.</p>
+  <form class="stack" data-form="verify">
+    <label class="field"><span>National ID or passport number</span><input id="v-id" name="idno" required minlength="6" placeholder="e.g. 31234567"></label>
+    <label class="field"><span>Photo of ID</span><input id="v-file" type="file" accept="image/*"><span class="hint">Checked by the KYC provider with a selfie match.</span></label>
+    <label class="field"><span>Phone number</span><div class="row"><input id="v-phone" name="phone" required placeholder="+254 7xx xxx xxx" style="flex:1"><button type="button" class="btn" data-act="otp">Send code</button></div></label>
+    <label class="field"><span>Code from SMS</span><input id="v-otp" name="otp" required inputmode="numeric" maxlength="4" placeholder="4 digits"><span class="hint" id="otp-hint">Tap “Send code” first.</span></label>
+    <div class="row"><button class="btn primary">Verify</button><button type="button" class="btn ghost" data-act="close">Not now</button></div></form>`);
+}
+function openPay(l) {
+  const u = me(), price = agreedPrice(l, u.id), dep = depositFor(l, price);
+  modal(`<h3>Pay into escrow</h3><p class="muted small">${esc(l.title)} · ${esc(l.place)}</p>
+  <div class="notice escrow"><span class="label">Amount</span><div class="price">${money(dep, l.currency)}</div><span class="small">${l.type === 'rent' ? 'First month + 1 month deposit' : '10% deposit'}. Held until you confirm the viewing and handover.</span></div>
+  <form class="stack" data-form="pay" data-id="${l.id}">
+    <label class="field"><span>Pay with</span><select id="p-method" name="method"><option>M-Pesa</option><option>Airtel Money</option><option>Card (Visa / Mastercard)</option></select></label>
+    <label class="field"><span>M-Pesa / mobile number or card</span><input id="p-acct" name="acct" required value="${esc(u.phone || '')}"><span class="hint">You will get a payment prompt on your phone.</span></label>
+    <div class="row"><button class="btn escrow">Pay ${money(dep, l.currency)}</button><button type="button" class="btn ghost" data-act="close">Cancel</button></div></form>`);
+}
+function openReport(l) {
+  modal(`<h3>Report this listing</h3><form class="stack" data-form="report" data-id="${l.id}">
+    <label class="field"><span>What is wrong?</span><select id="r-reason" name="reason"><option>Asked to pay outside the app</option><option>Photos copied from another listing</option><option>Owner is not who they claim</option><option>Property does not exist or is already taken</option><option>Price is misleading</option></select></label>
+    <label class="field"><span>Details (optional)</span><textarea id="r-det" name="det" rows="3"></textarea></label>
+    <div class="row"><button class="btn danger">Send report</button><button type="button" class="btn ghost" data-act="close">Cancel</button></div></form>`);
+}
+
+/* ---------- Render ---------- */
+function render() {
+  renderChrome();
+  const v = { browse: vBrowse, listing: vListing, sell: vSell, messages: vMessages, escrow: vEscrow, admin: vAdmin, blueprint: vBlueprint }[S.view] || vBrowse;
+  $('#app').innerHTML = v();
+  const m = $('#msgs'); if (m) m.scrollTop = m.scrollHeight;
+  save();
+}
+
+/* ---------- Actions ---------- */
+function sendMessage(th, text) {
+  const u = me();
+  const r = (S.rate['m' + u.id] || []).filter(t => Date.now() - t < MSG_BURST.ms);
+  if (r.length >= MSG_BURST.n) { toast('Slow down: too many messages in 30 seconds.', true); return false; }
+  S.rate['m' + u.id] = [...r, Date.now()];
+  const masked = text.replace(/\+?\d[\d\s-]{7,}\d/g, '[number hidden]').replace(/[^\s@]+@[^\s@]+\.[a-z]{2,}/gi, '[email hidden]');
+  th.messages.push({ from: u.id, text: masked, t: Date.now() });
+  if (masked !== text) th.messages.push({ sys: 'Contact details were hidden. Keep chat and payments on Noble so escrow protects both of you.', t: Date.now() });
+  notify(th.a === u.id ? th.b : th.a, `New message from ${u.name} about “${listing(th.listingId).title}”.`);
+  return true;
+}
+function threadFor(l) {
+  const u = me();
+  let th = S.threads.find(t => t.listingId === l.id && (t.a === u.id || t.b === u.id));
+  if (!th) { th = { id: 't' + Date.now(), listingId: l.id, a: u.id, b: l.ownerId, messages: [] }; S.threads.unshift(th); }
+  return th;
+}
+function finishTxn(t, out, by) {
+  const l = listing(t.listingId);
+  t.status = out;
+  if (out === 'released') {
+    const fee = t.amount * COMMISSION;
+    t.agreement = 'AGR-' + (hash(t.id) % 90000 + 10000);
+    t.log.push([Date.now(), `${money(t.amount - fee, t.currency)} released to ${user(t.seller).name}; ${money(fee, t.currency)} commission retained.`]);
+    if (l.type !== 'rent') t.log.push([Date.now(), `Sale agreement ${t.agreement} recorded. Title transfer to complete offline.`]);
+    notify(t.seller, `${money(t.amount - fee, t.currency)} released to you for “${l.title}”.`);
+    notify(t.buyer, `Escrow ${t.id} closed. Funds released to ${user(t.seller).name}.`);
+  } else {
+    t.log.push([Date.now(), `${money(t.amount, t.currency)} refunded to ${user(t.buyer).name} via ${t.method}${by ? ' (' + by + ')' : ''}.`]);
+    notify(t.buyer, `Refund of ${money(t.amount, t.currency)} sent for “${l.title}”.`);
+    notify(t.seller, `Escrow ${t.id} refunded to the buyer.`);
+  }
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (S.drawer && !e.target.closest('.drawer') && !(el && el.dataset.act === 'drawer')) { S.drawer = false; renderChrome(); }
+  if (!el) return;
+  const a = el.dataset.act, id = el.dataset.id, u = me();
+  if (a === 'close-scrim') { if (e.target === el) modal(''); return; }
+  switch (a) {
+    case 'go': S.view = el.dataset.view; break;
+    case 'filter': S.filter = el.dataset.f; break;
+    case 'select': S.selected = id; render(); document.querySelector(`.lcard[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return;
+    case 'open': S.selected = id; S.photoIdx = 0; S.view = 'listing'; window.scrollTo(0, 0); break;
+    case 'ph': S.photoIdx = +el.dataset.i; break;
+    case 'drawer': S.drawer = !S.drawer; (S.notes[u.id] || []).forEach(n => n.read = true); renderChrome(); return;
+    case 'reset': S = seed(); toast('Demo data reset.'); break;
+    case 'verify': openVerify(); return;
+    case 'close': modal(''); return;
+    case 'otp': { const hint = $('#otp-hint'); S.otp = String(1000 + hash(String(Date.now())) % 9000); hint.innerHTML = `Code sent. <b>Demo code: <span class="mono">${S.otp}</span></b>`; return; }
+    case 'message': if (!gate()) return; S.thread = threadFor(listing(id)).id; S.view = 'messages'; break;
+    case 'pay': if (!gate()) return; openPay(listing(id)); return;
+    case 'report': if (!gate()) return; openReport(listing(id)); return;
+    case 'thread': S.thread = id; break;
+    case 'offerans': {
+      const th = S.threads.find(t => t.id === S.thread), m = th.messages[+el.dataset.i], l = listing(th.listingId);
+      m.offer.status = el.dataset.ans;
+      th.messages.push({ sys: `${u.name} ${el.dataset.ans} the offer of ${money(m.offer.amount, l.currency)}.${el.dataset.ans === 'accepted' ? ' The buyer can now pay into escrow at this price.' : ''}`, t: Date.now() });
+      notify(m.from, `Your offer on “${l.title}” was ${el.dataset.ans}.`);
+      break;
+    }
+    case 'confirm': {
+      const t = S.txns.find(x => x.id === id), st = el.dataset.stage, side = el.dataset.side;
+      t[st][side] = true;
+      t.log.push([Date.now(), `${u.name} confirmed the ${st}.`]);
+      notify(side === 'buyer' ? t.seller : t.buyer, `${u.name} confirmed the ${st} for ${t.id}.`);
+      if (t.handover.buyer && t.handover.seller) { finishTxn(t, 'released'); toast('Handover confirmed by both sides. Funds released.'); }
+      break;
+    }
+    case 'refundreq': {
+      const t = S.txns.find(x => x.id === id);
+      if (u.id === t.seller) { finishTxn(t, 'refunded', 'cancelled by seller'); toast('Buyer refunded.'); break; }
+      t.status = 'disputed'; t.disputeBy = 'buyer';
+      t.log.push([Date.now(), `${u.name} requested a refund. Waiting for the seller to agree, or an admin decision.`]);
+      notify(t.seller, `${u.name} requested a refund on ${t.id}.`);
+      toast('Refund requested. The seller or an admin will respond.');
+      break;
+    }
+    case 'resolve': { const t = S.txns.find(x => x.id === id); finishTxn(t, el.dataset.out, u.role === 'admin' ? 'admin decision' : 'agreed by seller'); toast(el.dataset.out === 'refunded' ? 'Refund sent.' : 'Funds released.'); break; }
+    case 'atab': S.adminTab = el.dataset.t; break;
+    case 'approve': { const l = listing(id); l.status = 'approved'; l.created = Date.now(); notify(l.ownerId, `“${l.title}” was approved and is now live.`); toast('Listing approved and live.'); break; }
+    case 'reject': { const l = listing(id); l.status = 'rejected'; l.rejectReason = $('#rej-' + id).value; notify(l.ownerId, `“${l.title}” was rejected: ${l.rejectReason}.`); toast('Listing rejected. The lister was told why.'); break; }
+    case 'dismiss': S.reports.find(r => r.id === id).status = 'dismissed'; toast('Report dismissed.'); break;
+    case 'takedown': { const r = S.reports.find(x => x.id === id), l = listing(r.listingId); r.status = 'actioned'; l.status = 'removed'; notify(l.ownerId, `“${l.title}” was taken down after a report.`); notify(r.by, `Thanks. “${l.title}” was taken down.`); toast('Listing taken down.'); break; }
+    case 'suspend': { const x = user(id); x.suspended = !x.suspended; toast(x.suspended ? `${x.name} suspended.` : `${x.name} reinstated.`); break; }
+    case 'pickph': {
+      const d = S.draft, p = el.dataset.p;
+      d.photos = d.photos.includes(p) ? d.photos.filter(x => x !== p) : d.photos.length >= 5 ? (toast('Up to 5 photos per listing.', true), d.photos) : [...d.photos, p];
+      keepDraft(); break;
+    }
+    case 'pick': {
+      const svg = el, pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      const c = pt.matrixTransform(svg.getScreenCTM().inverse());
+      keepDraft(); S.draft.x = +c.x.toFixed(1); S.draft.y = +c.y.toFixed(1); break;
+    }
+    default: return;
+  }
+  render();
+});
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.pin')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
+  if (e.key === 'Escape' && $('#modal').innerHTML) modal('');
+});
+function keepDraft() {
+  const f = document.querySelector('form[data-form="listing"]'); if (!f) return;
+  const fd = new FormData(f);
+  for (const k of ['type', 'title', 'price', 'currency', 'size', 'unit', 'beds', 'titleStatus', 'client']) if (fd.has(k)) S.draft[k] = fd.get(k);
+  S.draft.proofName = f.proof.files[0]?.name || S.draft.proofName;
+}
+document.addEventListener('change', e => {
+  if (e.target.id === 'as') { S.me = e.target.value; S.drawer = false; if (S.view === 'listing' || S.view === 'sell' || S.view === 'admin' || S.view === 'messages') S.view = 'browse'; render(); toast(`Now viewing as ${me().name}.`); }
+  if (e.target.id === 'f-type') { keepDraft(); render(); }
+});
+
+document.addEventListener('submit', e => {
+  const f = e.target; e.preventDefault();
+  const fd = new FormData(f), u = me(), kind = f.dataset.form;
+  if (kind === 'verify') {
+    if (!S.otp || fd.get('otp') !== S.otp) { toast('That code does not match. Tap “Send code” and enter the 4 digits shown.', true); return; }
+    u.verified = true; u.idNo = '•••• ' + String(fd.get('idno')).slice(-4); u.phone = String(fd.get('phone'));
+    modal(''); toast('Verified. You can now list, message and pay.'); render();
+    if (S.pendingAfter) S.pendingAfter = null;
+    return;
+  }
+  if (kind === 'msg') {
+    const text = String(fd.get('text') || '').trim(); if (!text) return;
+    if (!gate()) return;
+    if (sendMessage(S.threads.find(t => t.id === S.thread), text)) render();
+    return;
+  }
+  if (kind === 'offer') {
+    if (!gate()) return;
+    const l = listing(f.dataset.id), amt = +fd.get('amt');
+    if (!(amt > 0)) { toast('Enter an offer amount.', true); return; }
+    const th = threadFor(l);
+    th.messages.push({ from: u.id, offer: { amount: amt, status: 'pending' }, t: Date.now() });
+    notify(l.ownerId, `${u.name} offered ${money(amt, l.currency)} on “${l.title}”.`);
+    S.thread = th.id; S.view = 'messages'; toast('Offer sent.'); render(); return;
+  }
+  if (kind === 'pay') {
+    const l = listing(f.dataset.id), price = agreedPrice(l, u.id), dep = depositFor(l, price), method = String(fd.get('method')).split(' ')[0];
+    const t = { id: 'ESC-' + (20000 + hash(String(Date.now())) % 9999), listingId: l.id, buyer: u.id, seller: l.ownerId, kind: l.type === 'rent' ? 'rent' : 'deposit', amount: dep, currency: l.currency, method,
+      status: 'held', viewing: { buyer: false, seller: false }, handover: { buyer: false, seller: false },
+      log: [[Date.now(), `${money(dep, l.currency)} received via ${method}.`], [Date.now(), `${user(l.ownerId).name} notified.`]] };
+    S.txns.unshift(t);
+    notify(l.ownerId, `${u.name} paid ${money(dep, l.currency)} into escrow for “${l.title}”. Arrange the viewing in Messages.`);
+    modal(''); S.view = 'escrow'; toast(`${money(dep, l.currency)} is now held in escrow.`); render(); return;
+  }
+  if (kind === 'report') {
+    const l = listing(f.dataset.id);
+    S.reports.unshift({ id: 'r' + Date.now(), listingId: l.id, by: u.id, reason: fd.get('reason') + (fd.get('det') ? ': ' + fd.get('det') : ''), t: Date.now(), status: 'open' });
+    modal(''); toast('Report sent to the moderation team.'); render(); return;
+  }
+  if (kind === 'listing') {
+    keepDraft();
+    if (!gate()) return;
+    const d = S.draft;
+    const recent = (S.rate[u.id] || []).filter(t => Date.now() - t < 24 * H);
+    if (recent.length >= LISTING_LIMIT) { toast('Daily listing limit reached.', true); return; }
+    if (d.x == null) { toast('Drop a pin on the map to set the exact location.', true); return; }
+    if (!d.photos.length) { toast('Add at least one photo.', true); return; }
+    if (d.type !== 'rent' && !d.proofName) { toast('Sale and land listings need a title deed or ownership document.', true); return; }
+    S.listings.unshift({ id: 'l' + Date.now().toString(36), type: d.type, title: d.title, price: +d.price, currency: d.currency || 'KES', place: nearestPlace(d.x, d.y), x: d.x, y: d.y,
+      size: +d.size, unit: d.unit || 'sqm', beds: +d.beds || 0, titleStatus: d.titleStatus, ownerId: u.id, status: 'pending', photos: d.photos, created: Date.now(),
+      proof: d.proofName ? { file: d.proofName } : null, clientOwner: d.client || null });
+    S.rate[u.id] = [...recent, Date.now()];
+    notify('u4', `New listing from ${u.name} waiting for review.`);
+    S.draft = null; toast('Submitted. An admin will review it before it goes live.'); render();
+  }
+});
+
+render();
+})();
+</script>
