@@ -14,11 +14,13 @@ Use the **Viewing as** menu to switch between the demo accounts:
 
 | Account | Role | Try this |
 | --- | --- | --- |
-| Amina Odhiambo | Buyer / renter | Open a listing, send an offer, pay a deposit into escrow, confirm viewing and handover |
-| Brian Otieno | Buyer (unverified) | Try to message or pay and get asked to verify ID and phone first |
-| Joseph Mwangi | Seller / landlord | Accept offers, confirm handovers, submit a listing |
+| Amina Odhiambo | Buyer / renter | Search and save listings, send an offer, agree a viewing in chat, pay a deposit into escrow, confirm viewing and handover, rate the landlord, open the deal record |
+| Brian Otieno | Buyer (unverified) | Try to message, save or pay and get asked to verify ID and phone first |
+| Joseph Mwangi | Seller / landlord | Accept offers and viewings, confirm handovers, see listing stats, mark a listing as let or sold, pause or relist |
 | Wanjiru Kamau | Agent | List for a client owner; reuse a photo to see duplicate detection |
-| Grace Njeri | Admin | Approve or reject the pending queue, act on reports, settle escrow disputes, suspend accounts |
+| Grace Njeri | Admin | Work the document checklist before approving, reject with a reason, act on reports, settle escrow disputes, suspend accounts, read the audit log |
+
+Other things to try: `#l2` on the end of the URL opens that listing directly; the escrow card shows the auto-refund date; a released deal issues a copyable deal record.
 
 Demo data lives in the browser's local storage. **Reset demo** restores it.
 
