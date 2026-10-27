@@ -41,6 +41,8 @@ export function registerListingRoutes(r, db) {
     return { items: page.map(l => listingView(db, l, ctx.user)), total: rows.length, next_cursor: offset + 20 < rows.length ? String(offset + 20) : null };
   });
 
+  r.get('/listings/mine', ctx => { const u = requireUser(ctx); return db.all('SELECT * FROM listings WHERE owner_id = ? ORDER BY created_at DESC', u.id).map(l => listingView(db, l, u)); });
+
   r.get('/listings/:id', ctx => {
     const l = db.get('SELECT * FROM listings WHERE id = ?', ctx.params.id); if (!l) throw notFound('listing not found');
     const isOwner = ctx.user && ctx.user.id === l.owner_id, isAdmin = ctx.user && ctx.user.role === 'admin';
@@ -48,8 +50,6 @@ export function registerListingRoutes(r, db) {
     if (!isOwner && !isAdmin) db.run('UPDATE listings SET view_count = view_count + 1 WHERE id = ?', l.id);
     return listingView(db, db.get('SELECT * FROM listings WHERE id = ?', l.id), ctx.user);
   });
-
-  r.get('/listings/mine', ctx => { const u = requireUser(ctx); return db.all('SELECT * FROM listings WHERE owner_id = ? ORDER BY created_at DESC', u.id).map(l => listingView(db, l, u)); });
 
   r.post('/listings', async ctx => {
     const u = requireVerified(ctx);

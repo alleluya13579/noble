@@ -14,6 +14,8 @@ cp .env.example .env        # fill in what you have; leave the rest empty
 node src/server.js
 ```
 
+Open **http://localhost:8080/app** for the web client (`web/index.html`, served by the API). It covers every screen: sign-in by SMS code, ID verification, browse and search with the map, listing pages with offers and viewings, seller listings with photo and document upload, escrow with confirmations, disputes, ratings and deal records, and the admin console (queue with checklist, reports, disputes, accounts, audit log, integrations). The client is a single static file; host it anywhere and point it at the API with `?api=https://api.example.com`.
+
 The startup log lists every integration and the keys that unlock it:
 
 ```

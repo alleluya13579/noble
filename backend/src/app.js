@@ -16,7 +16,10 @@ export function createApp({ dbPath = config.dbPath, scheduler = true, logger = c
   const db = openDatabase(dbPath);
   const r = createRouter();
   r.get('/', () => ({ name: 'Noble API', version: '0.1.0', docs: '/openapi.yaml', integrations: integrationStatus().map(i => `${i.kind}:${i.id}=${i.mode}`) }));
-  r.get('/openapi.yaml', () => ({ __file: true, contentType: 'application/yaml', bytes: fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'openapi.yaml')) }));
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  r.get('/openapi.yaml', () => ({ __file: true, contentType: 'application/yaml', bytes: fs.readFileSync(path.join(here, '..', 'openapi.yaml')) }));
+  // The web client (web/index.html) is served by the API itself, so one process is the whole product.
+  r.get('/app', () => ({ __file: true, contentType: 'text/html; charset=utf-8', bytes: fs.readFileSync(path.join(here, '..', '..', 'web', 'index.html')) }));
   r.get('/health', () => ({ ok: true, time: new Date().toISOString() }));
   registerAuthRoutes(r, db);
   registerListingRoutes(r, db);

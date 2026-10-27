@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Noble</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#f3f5f2; --surface:#fff; --sunk:#e8ece7; --line:#d3dad2; --ink:#17221d; --muted:#5b6a62; --accent:#0e6a57; --accent-ink:#fff; --accent-soft:#d9ece5; --escrow:#a8711a; --escrow-soft:#f5e8cf; --ok:#2f7d3b; --ok-soft:#dcefdc; --warn:#9a5b00; --warn-soft:#fbe9c9; --bad:#b3322a; --bad-soft:#f8dcd8; --map-land:#e3e9dd; --map-water:#bcd6dc; --map-road:#fff; --sale:#0e6a57; --rent:#2b5ea8; --rent-soft:#dde7f5; --land:#a8711a; --star:#d9a21b;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif; --f-body:"Public Sans","Segoe UI",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; --r:10px; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#111814; --surface:#19221d; --sunk:#0d130f; --line:#2d3a33; --ink:#e6ede8; --muted:#9aaba2; --accent:#3fb898; --accent-ink:#06261e; --accent-soft:#173b31; --escrow:#e0a84a; --escrow-soft:#3a2c13; --ok:#6cc77a; --ok-soft:#183622; --warn:#e5a54a; --warn-soft:#3a2a10; --bad:#f07a70; --bad-soft:#3d1a17; --map-land:#1d2a23; --map-water:#1c3a44; --map-road:#2c3b33; --sale:#3fb898; --rent:#6f9be0; --rent-soft:#1b2b44; --land:#e0a84a; --star:#f0c045; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg:#111814; --surface:#19221d; --sunk:#0d130f; --line:#2d3a33; --ink:#e6ede8; --muted:#9aaba2; --accent:#3fb898; --accent-ink:#06261e; --accent-soft:#173b31; --escrow:#e0a84a; --escrow-soft:#3a2c13; --ok:#6cc77a; --ok-soft:#183622; --warn:#e5a54a; --warn-soft:#3a2a10; --bad:#f07a70; --bad-soft:#3d1a17; --map-land:#1d2a23; --map-water:#1c3a44; --map-road:#2c3b33; --sale:#3fb898; --rent:#6f9be0; --rent-soft:#1b2b44; --land:#e0a84a; --star:#f0c045; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); }
+h1,h2,h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; } h2 { font-size: 1.6rem; } h3 { font-size: 1.1rem; }
+p { margin: 0; } button,input,select,textarea { font: inherit; color: inherit; } :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+img { max-width: 100%; }
+.mono,.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; } .muted { color: var(--muted); } .small { font-size: .85rem; }
+.label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; } .star { color: var(--star); }
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.bar { display: flex; align-items: center; gap: 12px; padding-block: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 8px; margin-right: auto; } .brand b { font-family: var(--f-display); font-size: 1.35rem; } .brand span { font-family: var(--f-mono); font-size: .72rem; color: var(--muted); }
+.who { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .who select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); max-width: 100%; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tab { border: 0; background: none; padding: 10px 12px; border-bottom: 2px solid transparent; cursor: pointer; color: var(--muted); white-space: nowrap; font-weight: 500; } .tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .ct { font-family: var(--f-mono); font-size: .75rem; background: var(--sunk); border-radius: 99px; padding: 1px 7px; margin-left: 4px; }
+main { padding-block: 24px 64px; } .page-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); } .pill.warn { background: var(--warn-soft); color: var(--warn); } .pill.bad { background: var(--bad-soft); color: var(--bad); } .pill.escrow { background: var(--escrow-soft); color: var(--escrow); } .pill.info { background: var(--rent-soft); color: var(--rent); }
+.pill.t-sale { background: var(--accent-soft); color: var(--sale); } .pill.t-rent { background: var(--rent-soft); color: var(--rent); } .pill.t-land { background: var(--escrow-soft); color: var(--land); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .9rem; }
+.btn:hover { border-color: var(--muted); } .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); } .btn.escrow { background: var(--escrow); color: var(--surface); border-color: var(--escrow); } .btn.danger { color: var(--bad); } .btn.ghost { border-color: transparent; background: none; } .btn:disabled { opacity: .45; cursor: not-allowed; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.heart { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer; color: var(--muted); flex: none; } .heart[aria-pressed="true"] { color: var(--bad); border-color: var(--bad); background: var(--bad-soft); }
+.search { display: grid; grid-template-columns: minmax(0,2fr) repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; } .search input,.search select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; }
+.browse { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.1fr); gap: 20px; align-items: start; }
+.mapbox { position: sticky; top: 110px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; }
+.map { width: 100%; height: auto; display: block; border-radius: 6px; background: var(--map-land); } .map .pin { cursor: pointer; } .map text { font-family: var(--f-mono); fill: var(--muted); }
+.legend { display: flex; gap: 14px; margin-top: 8px; font-size: .8rem; color: var(--muted); flex-wrap: wrap; } .legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: currentColor; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; } .chip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 12px; cursor: pointer; font-size: .85rem; } .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.ledger { display: grid; gap: 10px; }
+.lcard { display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; cursor: pointer; } .lcard:hover,.lcard.hl { border-color: var(--accent); }
+.ph { aspect-ratio: 4/3; border-radius: 6px; overflow: hidden; background: var(--sunk); display: grid; place-items: center; color: var(--muted); font-size: .75rem; } .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lmeta { display: grid; gap: 4px; min-width: 0; } .price { font-family: var(--f-mono); font-weight: 500; font-size: 1.05rem; font-variant-numeric: tabular-nums; } .price small { color: var(--muted); font-size: .78rem; } .facts { display: flex; gap: 12px; flex-wrap: wrap; font-size: .82rem; color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; } .stack { display: grid; gap: 14px; }
+.detail { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: 20px; align-items: start; }
+.gallery { aspect-ratio: 16/9; border-radius: var(--r); overflow: hidden; background: var(--sunk); display: grid; place-items: center; color: var(--muted); } .gallery img { width: 100%; height: 100%; object-fit: cover; }
+.thumbs { display: grid; grid-template-columns: repeat(6,1fr); gap: 8px; margin-top: 8px; } .thumbs button { padding: 0; border: 2px solid transparent; border-radius: 6px; overflow: hidden; aspect-ratio: 4/3; cursor: pointer; background: var(--sunk); } .thumbs button[aria-current="true"] { border-color: var(--accent); } .thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+dl.kv { display: grid; grid-template-columns: max-content minmax(0,1fr); gap: 8px 16px; margin: 0; } dl.kv dt { color: var(--muted); font-size: .85rem; } dl.kv dd { margin: 0; }
+.owner { display: flex; gap: 12px; align-items: center; } .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-family: var(--f-display); flex: none; }
+.field { display: grid; gap: 5px; } .field > span { font-size: .85rem; font-weight: 600; } .field input,.field select,.field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); } .field .hint { font-size: .78rem; color: var(--muted); font-weight: 400; }
+.grid2 { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.notice { border-radius: 8px; padding: 10px 12px; font-size: .88rem; background: var(--sunk); } .notice.warn { background: var(--warn-soft); color: var(--warn); } .notice.bad { background: var(--bad-soft); color: var(--bad); } .notice.ok { background: var(--ok-soft); color: var(--ok); } .notice.escrow { background: var(--escrow-soft); color: var(--escrow); }
+.stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; } .stats div { background: var(--sunk); border-radius: 8px; padding: 8px 10px; } .stats b { display: block; font-family: var(--f-mono); font-weight: 500; font-size: 1.1rem; } .stats span { font-size: .75rem; color: var(--muted); }
+.chat { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 16px; min-height: 460px; } .threads { display: grid; gap: 6px; align-content: start; }
+.thread { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 10px; cursor: pointer; width: 100%; } .thread[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.convo { display: grid; grid-template-rows: auto minmax(0,1fr) auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); min-width: 0; } .convo header { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.msgs { padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 440px; } .msg { max-width: 78%; padding: 8px 12px; border-radius: 12px; background: var(--sunk); overflow-wrap: anywhere; } .msg.me { align-self: flex-end; background: var(--accent-soft); } .msg .t { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+.offer { border: 1px dashed var(--escrow); background: var(--escrow-soft); color: var(--ink); } .viewing { border: 1px dashed var(--rent); background: var(--rent-soft); color: var(--ink); } .sys { align-self: center; font-size: .78rem; color: var(--muted); text-align: center; }
+.composer { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; } .composer form { display: flex; gap: 8px; flex-wrap: wrap; } .composer input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.steps { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); margin: 6px 0 4px; list-style: none; padding: 0; } .steps li { position: relative; padding-top: 22px; font-size: .78rem; color: var(--muted); text-align: center; padding-inline: 4px; }
+.steps li::before { content: ""; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 2px solid var(--line); z-index: 1; } .steps li::after { content: ""; position: absolute; top: 10px; left: -50%; width: 100%; height: 2px; background: var(--line); } .steps li:first-child::after { display: none; }
+.steps li.done { color: var(--ink); } .steps li.done::before { background: var(--escrow); border-color: var(--escrow); } .steps li.done::after { background: var(--escrow); } .steps li.fail::before { background: var(--bad); border-color: var(--bad); }
+.split { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; } .split div { background: var(--sunk); border-radius: 8px; padding: 10px; min-width: 0; } .split b { display: block; font-family: var(--f-mono); font-weight: 500; overflow-wrap: anywhere; }
+.confirms { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; } .confirm { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .88rem; } .confirm .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); flex: none; } .confirm.on .dot { background: var(--ok); }
+.log { margin: 0; padding-left: 18px; font-size: .82rem; color: var(--muted); display: grid; gap: 2px; }
+.stars button { background: none; border: 0; font-size: 1.4rem; cursor: pointer; color: var(--line); padding: 0 2px; } .stars:hover button { color: var(--star); } .stars button:hover ~ button { color: var(--line); }
+.record { background: var(--sunk); border-radius: 8px; padding: 12px; font-family: var(--f-mono); font-size: .8rem; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow-y: auto; }
+.subtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; } .qcard { display: grid; grid-template-columns: 160px minmax(0,1fr) auto; gap: 16px; align-items: start; }
+.checks { display: grid; gap: 4px; font-size: .86rem; margin: 0; padding: 0; } .checks li { list-style: none; display: flex; gap: 8px; }
+.chk { display: grid; gap: 6px; font-size: .86rem; background: var(--sunk); border-radius: 8px; padding: 10px; } .chk label { display: flex; gap: 8px; align-items: start; cursor: pointer; } .chk input { margin-top: 3px; }
+.tbl-wrap { overflow-x: auto; } table { border-collapse: collapse; width: 100%; font-size: .88rem; } th,td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; } th { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; } .yes { color: var(--ok); font-weight: 700; } .no { color: var(--muted); }
+.scrim { position: fixed; inset: 0; background: color-mix(in srgb, var(--ink) 45%, transparent); display: grid; place-items: center; z-index: 50; padding: 16px; } .modal { background: var(--surface); border-radius: 14px; width: min(520px,100%); max-height: 90vh; overflow-y: auto; padding: 22px; display: grid; gap: 14px; }
+.toasts { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); display: grid; gap: 8px; z-index: 60; max-width: calc(100vw - 32px); } .toast { background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 8px; font-size: .88rem; box-shadow: 0 6px 20px rgba(0,0,0,.18); } .toast.bad { background: var(--bad); color: #fff; }
+.empty { padding: 28px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--r); }
+.signin { max-width: 440px; margin: 40px auto; }
+.api { font-family: var(--f-mono); font-size: .72rem; color: var(--muted); }
+@media (max-width: 900px) { .browse,.detail,.chat { grid-template-columns: minmax(0,1fr); } .mapbox { position: static; } .qcard { grid-template-columns: minmax(0,1fr); } .qcard .ph { max-width: 220px; } .search { grid-template-columns: repeat(2,minmax(0,1fr)); } .search .q { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .lcard { grid-template-columns: 96px minmax(0,1fr); } .grid2,.confirms { grid-template-columns: minmax(0,1fr); } .split { grid-template-columns: minmax(0,1fr); } .stats { grid-template-columns: repeat(2,minmax(0,1fr)); } .steps li { font-size: .68rem; } .brand span { display: none; } }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap"><div class="bar"><div class="brand"><b>Noble</b><span>property marketplace</span></div><div class="who" id="who"></div></div><nav class="tabs" id="tabs" aria-label="Sections"></nav></div></header>
+<main class="wrap" id="app"><div class="empty">Loading…</div></main>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="modal"></div>
+<script>
+(() => {
+'use strict';
+/* ---------- API client ---------- */
+const qs = new URLSearchParams(location.search);
+const API = (qs.get('api') || localStorage.getItem('noble_api') || (location.protocol.startsWith('http') ? location.origin : 'http://localhost:8080')).replace(/\/$/, '');
+if (qs.get('api')) localStorage.setItem('noble_api', API);
+let TOKEN = localStorage.getItem('noble_token') || null;
+class ApiError extends Error { constructor(status, data) { super(data?.message || `HTTP ${status}`); this.status = status; this.code = data?.code; this.data = data; } }
+async function api(method, path, body, opts = {}) {
+  const headers = { ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}), ...(opts.contentType ? { 'Content-Type': opts.contentType } : body !== undefined ? { 'Content-Type': 'application/json' } : {}) };
+  const res = await fetch(API + path, { method, headers, body: opts.raw ?? (body !== undefined ? JSON.stringify(body) : undefined) });
+  const text = await res.text(); let data = null; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (!res.ok) throw new ApiError(res.status, data);
+  return data;
+}
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const initials = n => String(n || '?').split(' ').map(p => p[0]).slice(0, 2).join('');
+const ago = t => { const m = Math.round((Date.now() - Date.parse(t)) / 60000); if (m < 1) return 'just now'; if (m < 60) return m + 'm ago'; const h = Math.round(m / 60); return h < 48 ? h + 'h ago' : Math.round(h / 24) + 'd ago'; };
+const fmtDate = t => new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+const fmtWhen = t => new Date(t).toLocaleString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+const typeLabel = { sale: 'For sale', rent: 'For rent', land: 'Land' };
+function toast(text, bad) { const el = document.createElement('div'); el.className = 'toast' + (bad ? ' bad' : ''); el.textContent = text; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 4200); }
+function modal(html) { $('#modal').innerHTML = html ? `<div class="scrim" data-act="close-scrim"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>` : ''; const f = $('#modal input, #modal select, #modal button'); if (f) f.focus(); }
+
+/* ---------- State ---------- */
+const S = { view: 'browse', country: localStorage.getItem('noble_country') || 'KE', countries: [], me: null, q: { text: '', type: 'all', min: '', max: '', beds: '0', sort: 'newest', saved: false }, selected: null, photoIdx: 0, thread: null, adminTab: 'queue', cache: {} };
+const C = () => S.countries.find(c => c.code === S.country) || S.countries[0] || { code: 'KE', currency: 'KES', name: 'Kenya', center: { lat: -1.29, lng: 36.82 }, payment_methods: [], id_document_types: [], policy: {} };
+const money = (minor, cur) => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur, maximumFractionDigits: 0 }).format(minor / 100); } catch { return `${cur} ${(minor / 100).toLocaleString()}`; } };
+const methodLabel = m => ({ mpesa: 'M-Pesa', mpesa_tz: 'M-Pesa', airtel_money: 'Airtel Money', mtn_momo: 'MTN MoMo', tigo_pesa: 'Tigo Pesa', card: 'Card', bank_transfer: 'Bank transfer', ussd: 'USSD', eft: 'Instant EFT', open_banking: 'Open Banking', ach: 'ACH bank transfer' }[m] || m);
+const docLabel = d => ({ national_id: 'National ID', passport: 'Passport', nin: 'NIN', drivers_licence: "Driver's licence", ghana_card: 'Ghana Card', sa_id: 'SA ID', nida_id: 'NIDA ID', brp: 'BRP', state_id: 'State ID' }[d] || d);
+const verified = () => S.me && (S.me.verified || S.me.role === 'admin');
+
+/* Map: a survey-style sketch. Pins are projected from lat/lng around the country centre. */
+const BOX = { dlng: 0.32, dlat: 0.2 };
+const toXY = (lat, lng) => { const c = C().center; return { x: 50 + (lng - c.lng) / BOX.dlng * 50, y: 33 - (lat - c.lat) / BOX.dlat * 33 }; };
+const fromXY = (x, y) => { const c = C().center; return { lng: +(c.lng + (x - 50) / 50 * BOX.dlng).toFixed(5), lat: +(c.lat - (y - 33) / 33 * BOX.dlat).toFixed(5) }; };
+function mapSVG({ listings = [], pick = false, draft = null } = {}) {
+  const pins = listings.map(l => { const p = toXY(l.lat, l.lng), sel = S.selected === l.id; if (p.x < 0 || p.x > 100 || p.y < 0 || p.y > 66) return ''; return `<g class="pin" data-act="select" data-id="${l.id}" tabindex="0" role="button" aria-label="${esc(l.title)}"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${sel ? 3.2 : 2.3}" fill="var(--${l.type})" stroke="var(--surface)" stroke-width=".8"/>${sel ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="none" stroke="var(--${l.type})" stroke-width=".5"/>` : ''}</g>`; }).join('');
+  const d = draft ? toXY(draft.lat, draft.lng) : null;
+  return `<svg class="map" viewBox="0 0 100 66" ${pick ? 'data-act="pick" style="cursor:crosshair"' : ''} aria-label="Map of ${esc(C().name)}">
+    <rect width="100" height="66" fill="var(--map-land)"/><path d="M0 47 C18 44 30 48 44 45 S70 40 100 36" stroke="var(--map-water)" stroke-width="2.2" fill="none"/>
+    <path d="M47 0 C49 18 53 26 52 34 S58 50 62 66" stroke="var(--map-road)" stroke-width="1.4" fill="none"/><path d="M0 30 C20 31 40 36 52 34 S80 28 100 22" stroke="var(--map-road)" stroke-width="1.4" fill="none"/><path d="M52 34 L80 46 L92 66" stroke="var(--map-road)" stroke-width="1" fill="none"/><path d="M52 34 L70 18 L100 6" stroke="var(--map-road)" stroke-width="1" fill="none"/>
+    <text x="50" y="37" font-size="2.4" text-anchor="middle">${esc(C().name)} · centre</text><text x="97" y="63" font-size="2.2" text-anchor="end">N ↑ · ≈ ${Math.round(BOX.dlng * 111 * 2)} km across</text>
+    ${pins}${d ? `<g><circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="2.6" fill="var(--accent)" stroke="var(--surface)" stroke-width=".8"/><circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="5" fill="none" stroke="var(--accent)" stroke-width=".4" stroke-dasharray="1 1"/></g>` : ''}</svg>`;
+}
+
+/* ---------- Chrome ---------- */
+function renderChrome() {
+  const u = S.me;
+  $('#who').innerHTML = `
+    <select id="country" aria-label="Country">${S.countries.map(c => `<option value="${c.code}" ${c.code === S.country ? 'selected' : ''}>${esc(c.name)} · ${c.currency}</option>`).join('')}</select>
+    ${u ? `<span class="small"><b>${esc(u.full_name)}</b> <span class="muted">· ${u.role}</span></span>${verified() ? '<span class="pill ok">✓ Verified</span>' : '<button class="pill warn" data-act="verify" style="border:0;cursor:pointer">Unverified · verify now</button>'}<button class="btn ghost small" data-act="signout">Sign out</button>` : '<button class="btn primary" data-act="go" data-view="signin">Sign in</button>'}
+    <span class="api" title="API base URL">${esc(API)}</span>`;
+  const tabs = [['browse', 'Browse']];
+  if (u && ['seller', 'agent'].includes(u.role)) tabs.push(['sell', 'My listings']);
+  if (u && u.role !== 'admin') tabs.push(['messages', 'Messages']);
+  if (u) tabs.push(['escrow', 'Escrow']);
+  if (u && u.role === 'admin') tabs.push(['admin', 'Moderation']);
+  $('#tabs').innerHTML = tabs.map(([k, n]) => `<button class="tab" data-act="go" data-view="${k}" ${S.view === k || (S.view === 'listing' && k === 'browse') ? 'aria-current="page"' : ''}>${n}</button>`).join('');
+}
+
+/* ---------- Views ---------- */
+async function vSignin() {
+  const c = C();
+  return `<div class="signin panel stack">
+    <h2>Sign in to Noble</h2><p class="muted small">We text a code to your phone. New here? Add your name and what you want to do.</p>
+    <form class="stack" data-form="otp">
+      <label class="field"><span>Country</span><select id="si-country" name="country">${S.countries.map(x => `<option value="${x.code}" ${x.code === S.country ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
+      <label class="field"><span>Phone number</span><input id="si-phone" name="phone" required placeholder="${esc(c.phone_prefix)} 7xx xxx xxx" value="${esc(S.phone || '')}"></label>
+      ${S.otpSent ? `<label class="field"><span>Code from SMS</span><input id="si-code" name="code" required inputmode="numeric" placeholder="6 digits" value="${esc(S.devCode || '')}"><span class="hint">${S.devCode ? `Development mode: the code is <b class="mono">${S.devCode}</b>` : 'Check your messages.'}</span></label>
+      <div class="grid2"><label class="field"><span>Full name <span class="hint">(new accounts)</span></span><input id="si-name" name="full_name" placeholder="As on your ID"></label><label class="field"><span>I am a</span><select id="si-role" name="role"><option value="buyer">Buyer / renter</option><option value="seller">Seller / landlord</option><option value="agent">Agent</option></select></label></div>
+      <div class="row"><button class="btn primary">Verify and sign in</button><button type="button" class="btn ghost" data-act="otp-reset">Use another number</button></div>` : '<div class="row"><button class="btn primary">Send code</button></div>'}
+    </form></div>`;
+}
+
+async function vBrowse() {
+  const c = C(), q = S.q, p = new URLSearchParams({ country: c.code });
+  if (q.text.trim()) p.set('q', q.text.trim()); if (q.type !== 'all') p.set('type', q.type); if (q.min) p.set('min_price', Math.round(+q.min * 100)); if (q.max) p.set('max_price', Math.round(+q.max * 100)); if (+q.beds) p.set('beds', q.beds); p.set('sort', q.sort); if (q.saved) p.set('saved', 'true');
+  const r = await api('GET', '/listings?' + p); S.cache.browse = r.items;
+  return `<div class="page-head"><div><h2>Homes and land in ${esc(c.name)}</h2><p class="muted">${r.total} live listing${r.total === 1 ? '' : 's'} · every owner ID-verified · deposits held in escrow</p></div></div>
+  <div class="search">
+    <input class="q" id="q-text" type="search" placeholder="Search title, area or title status" value="${esc(q.text)}" aria-label="Search">
+    <input id="q-min" type="number" min="0" placeholder="Min ${c.currency}" value="${esc(q.min)}" aria-label="Minimum price"><input id="q-max" type="number" min="0" placeholder="Max ${c.currency}" value="${esc(q.max)}" aria-label="Maximum price">
+    <select id="q-sort" aria-label="Sort">${[['newest', 'Newest first'], ['price_asc', 'Price: low to high'], ['price_desc', 'Price: high to low'], ['popular', 'Most viewed']].map(([k, n]) => `<option value="${k}" ${q.sort === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+  </div>
+  <div class="filters">${['all', 'sale', 'rent', 'land'].map(f => `<button class="chip" data-act="filter" data-f="${f}" aria-pressed="${q.type === f}">${f === 'all' ? 'All' : typeLabel[f]}</button>`).join('')}
+    <select id="q-beds" class="chip" style="padding:4px 10px" aria-label="Bedrooms">${['0', '1', '2', '3', '4'].map(b => `<option value="${b}" ${q.beds === b ? 'selected' : ''}>${b === '0' ? 'Any bedrooms' : b + '+ bed'}</option>`).join('')}</select>
+    ${S.me ? `<button class="chip" data-act="savedonly" aria-pressed="${q.saved}">♥ Saved</button>` : ''}</div>
+  <div class="browse"><div class="mapbox">${mapSVG({ listings: r.items })}<div class="legend"><span style="color:var(--sale)">Sale</span><span style="color:var(--rent)">Rent</span><span style="color:var(--land)">Land</span></div></div>
+    <div class="ledger" id="ledger">${r.items.map(card).join('') || '<div class="empty">No live listings match. In a fresh database, sign in as a seller, submit a listing, then approve it as admin.</div>'}</div></div>`;
+}
+function card(l) {
+  return `<div class="lcard ${S.selected === l.id ? 'hl' : ''}" data-act="open" data-id="${l.id}" role="button" tabindex="0">
+    <div class="ph">${l.photos[0] ? `<img src="${esc(l.photos[0].url)}" alt="">` : 'No photo'}</div>
+    <div class="lmeta"><div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span><span class="small muted">${esc(l.place_name)}</span>${S.me ? `<button class="heart" style="margin-left:auto" data-act="save" data-id="${l.id}" aria-pressed="${l.saved}" aria-label="Save">♥</button>` : ''}</div>
+      <h3>${esc(l.title)}</h3><div class="price">${money(l.price_minor, l.currency)}${l.type === 'rent' ? ' <small>/ month</small>' : ''}</div>
+      <div class="facts"><span>${l.size} ${l.size_unit}</span>${l.bedrooms ? `<span>${l.bedrooms} bed</span>` : ''}<span>${esc(l.title_status)}</span></div>
+      <div class="small muted">${esc(l.owner.full_name)} · ${l.owner.role}${l.owner.verified ? ' <span class="pill ok">verified</span>' : ''}${l.owner.rating.count ? ` <span class="star">★</span> ${l.owner.rating.avg}` : ''}</div></div></div>`;
+}
+
+async function vListing() {
+  let l; try { l = await api('GET', `/listings/${S.selected}`); } catch (e) { S.view = 'browse'; toast(e.message, true); return vBrowse(); }
+  S.cache.listing = l;
+  const c = C(), u = S.me, o = l.owner, mine = u && u.id === o.id, idx = Math.min(S.photoIdx, Math.max(0, l.photos.length - 1));
+  const dep = l.type === 'rent' ? l.price_minor * (1 + (c.policy.rent_deposit_months || 1)) : Math.round(l.price_minor * (c.policy.deposit_pct_sale || 10) / 100);
+  let actions;
+  if (u && u.role === 'admin') actions = '<p class="muted small">Admins moderate from the Moderation tab.</p>';
+  else if (mine) actions = `<div class="row" style="justify-content:space-between"><b>Your listing</b>${statusPill(l)}</div>
+    <div class="stats"><div><b>${l.stats.views}</b><span>views</span></div><div><b>${l.stats.saves}</b><span>saves</span></div><div><b>${l.stats.enquiries}</b><span>enquiries</span></div><div><b>${l.stats.offers}</b><span>offers</span></div></div>
+    ${l.reject_reason ? `<div class="notice bad">Rejected: ${esc(l.reject_reason)}</div>` : ''}
+    <div class="row">${ownerActions(l)}</div>
+    <div class="row"><label class="btn">Add photo<input type="file" accept="image/*" hidden data-upload="photo" data-id="${l.id}"></label><label class="btn">Add document<input type="file" accept=".pdf,image/*" hidden data-upload="document" data-id="${l.id}"></label>
+      <select id="doc-kind" class="chip" style="padding:6px 10px"><option value="title_deed">Title deed</option><option value="registry_search">Registry search</option><option value="lease_authority">Lease authority</option><option value="allotment_letter">Allotment letter</option></select></div>
+    ${l.documents?.length ? `<div class="small muted">Documents: ${l.documents.map(d => `${d.kind}${d.checked_at ? ' ✓' : ''}`).join(', ')}</div>` : '<div class="small muted">No ownership document yet (required for sale and land).</div>'}`;
+  else if (l.status !== 'approved') actions = `<div class="notice">This listing is no longer available.</div>`;
+  else actions = `<div class="row"><button class="btn" data-act="message" data-id="${l.id}">Message ${esc(o.full_name.split(' ')[0])}</button><button class="btn" data-act="save" data-id="${l.id}">${l.saved ? '♥ Saved' : '♡ Save'}</button><button class="btn ghost" data-act="copylink" data-id="${l.id}">Copy link</button></div>
+    <form class="row" data-form="offer" data-id="${l.id}"><label class="field" style="flex:1;min-width:140px"><span>Your offer (${l.currency}${l.type === 'rent' ? ' / month' : ''})</span><input id="offer-amt" name="amt" type="number" min="1" value="${Math.round(l.price_minor * 0.95 / 100)}"></label><button class="btn" style="align-self:end">Send offer</button></form>
+    <div class="notice escrow"><b>${l.type === 'rent' ? `First month + ${c.policy.rent_deposit_months} month deposit` : `${c.policy.deposit_pct_sale}% deposit`}:</b> <span class="mono">${money(dep, l.currency)}</span><br><span class="small">Held by Noble until you confirm the viewing and handover. Refunded automatically if no viewing is confirmed within ${c.policy.viewing_days} days. An accepted offer changes the amount.</span></div>
+    <button class="btn escrow" data-act="pay" data-id="${l.id}">Pay into escrow</button>
+    ${l.address_private ? `<div class="notice ok small">Exact address (visible because your escrow is held): ${esc(l.address_private)}</div>` : ''}
+    <button class="btn ghost danger small" data-act="report" data-id="${l.id}">Report this listing</button>`;
+  return `<div class="row" style="margin-bottom:12px"><button class="btn ghost" data-act="go" data-view="browse">← All listings</button></div>
+  <div class="detail"><div class="stack">
+    <div class="gallery">${l.photos[idx] ? `<img src="${esc(l.photos[idx].url)}" alt="">` : 'No photos yet'}</div>
+    ${l.photos.length > 1 ? `<div class="thumbs">${l.photos.map((p, i) => `<button data-act="ph" data-i="${i}" aria-current="${i === idx}"><img src="${esc(p.url)}" alt=""></button>`).join('')}</div>` : ''}
+    <div class="panel stack"><div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span>${l.status !== 'approved' ? statusPill(l) : ''}<span class="mono small muted">${l.id.slice(0, 8).toUpperCase()}</span><span class="small muted" style="margin-left:auto">${l.stats.views} views</span></div>
+      <h2>${esc(l.title)}</h2><div class="price" style="font-size:1.4rem">${money(l.price_minor, l.currency)}${l.type === 'rent' ? ' <small>/ month</small>' : ''}</div>
+      ${l.description ? `<p>${esc(l.description)}</p>` : ''}
+      <dl class="kv"><dt>Location</dt><dd>${esc(l.place_name)} · <span class="mono small">${l.lat.toFixed(4)}, ${l.lng.toFixed(4)}</span></dd><dt>Size</dt><dd>${l.size} ${l.size_unit}${l.bedrooms ? ` · ${l.bedrooms} bedroom${l.bedrooms > 1 ? 's' : ''}` : ''}</dd><dt>Title status</dt><dd>${esc(l.title_status)}</dd>
+        <dt>Ownership proof</dt><dd>${l.ownership_verified ? '<span class="pill ok">✓ Checked by Noble</span>' : '<span class="pill warn">Not yet checked</span>'}</dd><dt>Listed</dt><dd>${ago(l.created_at)}</dd></dl></div></div>
+  <div class="stack"><div class="panel stack"><div class="label">Listed by</div><div class="owner"><div class="avatar">${initials(o.full_name)}</div><div><b>${esc(o.full_name)}</b><div class="small muted">${o.role}${o.agent_licence ? ` · licence <span class="mono">${esc(o.agent_licence)}</span>` : ''}</div></div></div>
+      <div class="small">${o.rating.count ? `<span class="star">★</span> ${o.rating.avg} <span class="muted">(${o.rating.count})</span> · ` : ''}${o.deals_completed} deal${o.deals_completed === 1 ? '' : 's'} completed · member since ${o.member_since.slice(0, 4)}</div>
+      <div class="row">${o.verified ? '<span class="pill ok">✓ ID</span><span class="pill ok">✓ Phone</span>' : '<span class="pill warn">Not verified</span>'}</div>${l.client_owner_name ? `<p class="small muted">Listing on behalf of registered owner <b>${esc(l.client_owner_name)}</b>.</p>` : ''}</div>
+    <div class="panel stack">${actions}</div><div class="panel" style="padding:10px">${mapSVG({ listings: [l] })}</div>
+    ${l.type !== 'rent' ? `<p class="small muted">Full sale and land transfers complete offline at ${esc(c.land_registry)}. Noble escrows the deposit and records the agreement.</p>` : ''}</div></div>`;
+}
+function statusPill(l) { return { approved: '<span class="pill ok">Live</span>', pending: '<span class="pill warn">Pending review</span>', rejected: '<span class="pill bad">Rejected</span>', removed: '<span class="pill bad">Taken down</span>', paused: '<span class="pill">Paused</span>', closed: `<span class="pill info">${l.type === 'rent' ? 'Let' : 'Sold'}</span>` }[l.status] || ''; }
+function ownerActions(l) {
+  const b = (a, t, cls = '') => `<button class="btn ${cls}" data-act="status" data-id="${l.id}" data-a="${a}">${t}</button>`;
+  if (l.status === 'approved') return b('close', `Mark as ${l.type === 'rent' ? 'let' : 'sold'}`) + b('pause', 'Pause', 'ghost');
+  if (l.status === 'paused') return b('resume', 'Resume') + b('close', `Mark as ${l.type === 'rent' ? 'let' : 'sold'}`, 'ghost');
+  if (['closed', 'rejected', 'removed'].includes(l.status)) return b('relist', 'Relist (goes back through review)', 'ghost');
+  return '';
+}
+async function vSell() {
+  const u = S.me, c = C(), mine = await api('GET', '/listings/mine'); const d = S.draft || (S.draft = { type: 'rent', lat: null, lng: null });
+  return `<div class="page-head"><div><h2>My listings</h2><p class="muted">New listings wait in the review queue until an admin completes the document checklist. You are listing in ${esc(c.name)} (${c.currency}).</p></div></div>
+  <div class="detail"><form class="panel stack" data-form="listing"><h3>New listing</h3>${verified() ? '' : '<div class="notice warn">Verify your ID and phone before you can submit a listing.</div>'}
+    <div class="grid2"><label class="field"><span>Type</span><select id="f-type" name="type">${['sale', 'rent', 'land'].map(t => `<option value="${t}" ${d.type === t ? 'selected' : ''}>${typeLabel[t]}</option>`).join('')}</select></label>
+      <label class="field"><span>Title</span><input id="f-title" name="title" required maxlength="120" placeholder="e.g. 3-bed bungalow with parking" value="${esc(d.title || '')}"></label>
+      <label class="field"><span>Price (${c.currency}${d.type === 'rent' ? ' per month' : ''})</span><input id="f-price" name="price" type="number" min="1" required value="${esc(d.price || '')}"></label>
+      <label class="field"><span>Bedrooms</span><input id="f-beds" name="bedrooms" type="number" min="0" value="${esc(d.bedrooms ?? 0)}"></label>
+      <label class="field"><span>Size</span><input id="f-size" name="size" type="number" min="0" step="any" required value="${esc(d.size || '')}"></label>
+      <label class="field"><span>Unit</span><select id="f-unit" name="size_unit">${['sqm', 'sqft', 'acres', 'hectares', 'plots'].map(x => `<option ${d.size_unit === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+      <label class="field"><span>Title / ownership status</span><input id="f-ts" name="title_status" required placeholder="e.g. Freehold title deed" value="${esc(d.title_status || '')}"></label>
+      <label class="field"><span>Area name</span><input id="f-place" name="place_name" placeholder="e.g. Kilimani" value="${esc(d.place_name || '')}"></label></div>
+    ${u.role === 'agent' ? `<label class="field"><span>Registered owner you represent</span><input id="f-client" name="client_owner_name" required value="${esc(d.client_owner_name || '')}"><span class="hint">Must match the name on the title deed or lease authority.</span></label>` : ''}
+    <label class="field"><span>Exact address <span class="hint">(private: shown to a buyer only once their escrow is held)</span></span><input id="f-addr" name="address_private" value="${esc(d.address_private || '')}"></label>
+    <label class="field"><span>Description</span><textarea id="f-desc" name="description" rows="3">${esc(d.description || '')}</textarea></label>
+    <div class="field"><span>Pin the location <span class="hint">click the map, or leave it and the address is geocoded</span></span>${mapSVG({ pick: true, draft: d.lat != null ? d : null })}<span class="hint">${d.lat != null ? `Pinned at <span class="mono">${d.lat}, ${d.lng}</span>` : 'No pin yet'}</span></div>
+    <div class="row"><button class="btn primary">Submit for review</button><span class="small muted">Add photos and the ownership document from the listing page after submitting.</span></div></form>
+  <div class="stack"><h3>Submitted</h3>${mine.map(l => `<div class="panel stack" style="padding:12px;gap:8px"><div class="row" style="justify-content:space-between"><b>${esc(l.title)}</b>${statusPill(l)}</div><div class="small muted">${typeLabel[l.type]} · ${esc(l.place_name)} · <span class="mono">${money(l.price_minor, l.currency)}</span> · ${ago(l.created_at)}</div>
+    <div class="small muted">${l.stats.views} views · ${l.stats.saves} saves · ${l.stats.enquiries} enquiries · ${l.stats.offers} offers · ${l.photos.length} photo${l.photos.length === 1 ? '' : 's'}</div>${l.reject_reason ? `<div class="notice bad small">Rejected: ${esc(l.reject_reason)}</div>` : ''}
+    <div class="row"><button class="btn ghost small" data-act="open" data-id="${l.id}">Open</button>${ownerActions(l)}</div></div>`).join('') || '<div class="empty">Nothing submitted yet.</div>'}</div></div>`;
+}
+
+async function vMessages() {
+  const u = S.me, ths = await api('GET', '/threads');
+  if (!ths.length) return '<div class="page-head"><h2>Messages</h2></div><div class="empty">No conversations yet. Open a listing and message the owner.</div>';
+  const th = ths.find(t => t.id === S.thread) || ths[0]; S.thread = th.id;
+  const other = th.buyer.id === u.id ? th.owner : th.buyer, l = th.listing;
+  const bubbles = th.messages.map(m => {
+    if (m.kind === 'system') return `<div class="sys">${esc(m.body)}</div>`;
+    const mine = m.sender_id === u.id, who = `<div class="t">${mine ? 'You' : esc(other.full_name.split(' ')[0])} · ${ago(m.created_at)}</div>`;
+    const dec = { pending: '<span class="pill warn">Awaiting reply</span>', accepted: '<span class="pill ok">Accepted</span>', declined: '<span class="pill">Declined</span>', expired: '<span class="pill">Expired</span>' }[m.decision];
+    const btns = !mine && m.decision === 'pending' ? `<button class="btn small" data-act="decide" data-id="${m.id}" data-d="accepted">Accept</button><button class="btn ghost small" data-act="decide" data-id="${m.id}" data-d="declined">Decline</button>` : '';
+    if (m.kind === 'offer') return `<div class="msg offer ${mine ? 'me' : ''}"><div class="label">Offer${l.type === 'rent' ? ' / month' : ''}</div><div class="price">${money(m.offer_minor, l.currency)}</div><div class="row small">${dec}${btns}</div>${who}</div>`;
+    if (m.kind === 'viewing') return `<div class="msg viewing ${mine ? 'me' : ''}"><div class="label">Viewing proposed</div><div><b>${fmtWhen(m.viewing_at)}</b></div><div class="row small">${dec}${btns}</div>${who}</div>`;
+    return `<div class="msg ${mine ? 'me' : ''}">${esc(m.body)}${who}</div>`;
+  }).join('');
+  const minWhen = new Date(Date.now() + 3600e3).toISOString().slice(0, 16);
+  return `<div class="page-head"><div><h2>Messages</h2><p class="muted">Phone numbers and emails are hidden in chat. Keep payments in-app so escrow protects you.</p></div></div>
+  <div class="chat"><div class="threads">${ths.map(t => { const o = t.buyer.id === u.id ? t.owner : t.buyer, last = t.messages[t.messages.length - 1]; return `<button class="thread" data-act="thread" data-id="${t.id}" aria-current="${t.id === th.id}"><b>${esc(o.full_name)}</b><div class="small muted">${esc(t.listing.title)}</div>${last ? `<div class="small muted">${ago(last.created_at)}</div>` : ''}</button>`; }).join('')}</div>
+  <section class="convo"><header class="row" style="justify-content:space-between"><div><b>${esc(other.full_name)}</b> <span class="small muted">· ${esc(l.title)}</span></div><button class="btn ghost small" data-act="open" data-id="${l.id}">Open listing</button></header>
+    <div class="msgs" id="msgs">${bubbles}</div>
+    <div class="composer"><form data-form="msg" data-id="${th.id}"><input id="msg-text" name="text" autocomplete="off" placeholder="Write a message"><button class="btn primary">Send</button></form>
+      <form data-form="offer" data-id="${l.id}" data-thread="${th.id}"><input id="msg-offer" name="amt" type="number" min="1" placeholder="Offer (${l.currency})"><button class="btn">Send offer</button></form>
+      <form data-form="viewing" data-id="${th.id}"><input id="msg-when" name="when" type="datetime-local" min="${minWhen}"><button class="btn">Propose viewing</button></form></div></section></div>`;
+}
+
+async function vEscrow() {
+  const list = await api('GET', '/transactions'), c = C();
+  return `<div class="page-head"><div><h2>Escrow</h2><p class="muted">Money is held by Noble until both sides confirm the viewing and the handover. Commission in ${esc(c.name)} is ${c.policy.commission_pct}% on release.</p></div></div><div class="stack">${list.map(txnCard).join('') || '<div class="empty">No escrow payments yet.</div>'}</div>`;
+}
+function txnCard(t) {
+  const u = S.me, isB = u.id === t.buyer.id, isS = u.id === t.seller.id, cf = t.confirmations, v = cf.viewing_buyer && cf.viewing_seller, h = cf.handover_buyer && cf.handover_seller, av = t.available_transitions;
+  const steps = [['Paid into escrow', ['held', 'viewing_confirmed', 'disputed', 'released', 'refunded'].includes(t.state)], ['Seller notified', ['held', 'viewing_confirmed', 'disputed', 'released', 'refunded'].includes(t.state)], ['Viewing confirmed', v], ['Handover confirmed', h], [t.state === 'refunded' ? 'Refunded to buyer' : 'Released to seller', ['released', 'refunded'].includes(t.state)]];
+  const pill = { initiated: '<span class="pill">Starting</span>', payment_pending: '<span class="pill warn">Awaiting payment</span>', held: '<span class="pill escrow">Held in escrow</span>', viewing_confirmed: '<span class="pill escrow">Held · viewing done</span>', disputed: '<span class="pill warn">Refund requested</span>', released: '<span class="pill ok">Released</span>', refunded: '<span class="pill bad">Refunded</span>', expired: '<span class="pill bad">Payment not completed</span>' }[t.state];
+  const conf = (stage, side, who) => { const on = cf[`${stage}_${side}`], can = av.includes(`confirm_${stage}`) && ((side === 'buyer' && isB) || (side === 'seller' && isS)) && !on; return `<div class="confirm ${on ? 'on' : ''}"><span class="dot"></span><span style="flex:1">${who} confirms ${stage}</span>${can ? `<button class="btn small" data-act="transition" data-id="${t.id}" data-t="confirm_${stage}">Confirm</button>` : on ? '<span class="small yes">done</span>' : ''}</div>`; };
+  const fee = t.commission_minor ?? Math.round(t.amount_minor * (C().policy.commission_pct || 5) / 100);
+  let acts = '';
+  if (av.includes('seller_cancel')) acts += `<button class="btn ghost danger" data-act="transition" data-id="${t.id}" data-t="seller_cancel">Cancel deal · refund buyer</button>`;
+  if (av.includes('open_dispute')) acts += `<button class="btn ghost danger" data-act="dispute" data-id="${t.id}">Deal fell through · request refund</button>`;
+  if (av.includes('seller_agrees_refund')) acts += `<button class="btn" data-act="transition" data-id="${t.id}" data-t="seller_agrees_refund">Agree to refund</button>`;
+  if (u.role === 'admin' && t.state === 'disputed') acts += `<button class="btn" data-act="resolve" data-id="${t.id}" data-t="admin_refund">Refund buyer</button><button class="btn escrow" data-act="resolve" data-id="${t.id}" data-t="release">Release to seller</button>`;
+  if (t.state === 'released') acts += `<button class="btn" data-act="record" data-id="${t.id}">View deal record</button>`;
+  if (t.redirect_url && t.state === 'payment_pending') acts += `<a class="btn escrow" href="${esc(t.redirect_url)}" target="_blank" rel="noopener">Complete payment</a>`;
+  const rating = t.state === 'released' && (isB || isS) ? `<div class="row small"><span>Rate ${esc((isB ? t.seller : t.buyer).full_name.split(' ')[0])}:</span><span class="stars">${[1, 2, 3, 4, 5].map(n => `<button data-act="rate" data-id="${t.id}" data-stars="${n}" aria-label="${n} stars">★</button>`).join('')}</span></div>` : '';
+  const deadline = t.state === 'held' && t.viewing_deadline ? `Auto-refund on <b>${fmtDate(t.viewing_deadline)}</b> unless both sides confirm the viewing.` : t.state === 'viewing_confirmed' && t.handover_deadline ? `Auto-refund on <b>${fmtDate(t.handover_deadline)}</b> unless both sides confirm the handover.` : '';
+  return `<article class="panel stack"><div class="row" style="justify-content:space-between"><div><span class="mono small muted">${t.reference}</span><h3>${esc(t.buyer.full_name)} → ${esc(t.seller.full_name)}</h3><div class="small muted">${methodLabel(t.gateway.replace('sandbox:', ''))}${t.gateway.startsWith('sandbox') ? ' (sandbox)' : ''} · ${t.paid_at ? 'paid ' + fmtDate(t.paid_at) : 'not paid yet'}</div></div>${pill}</div>
+    <ol class="steps">${steps.map(([n, d], i) => `<li class="${d ? (i === 4 && t.state === 'refunded' ? 'done fail' : 'done') : ''}">${n}</li>`).join('')}</ol>
+    <div class="split"><div><span class="label">Held</span><b>${money(t.amount_minor, t.currency)}</b></div><div><span class="label">Noble commission</span><b>${money(fee, t.currency)}</b></div><div><span class="label">Seller receives</span><b>${money(t.amount_minor - fee, t.currency)}</b></div></div>
+    ${deadline ? `<div class="notice small">${deadline}</div>` : ''}${t.dispute ? `<div class="notice warn small">Dispute: ${esc(t.dispute.reason)}</div>` : ''}${t.refund_reason ? `<div class="notice small">Refunded: ${esc(t.refund_reason)}</div>` : ''}
+    ${['held', 'viewing_confirmed'].includes(t.state) ? `<div class="confirms">${conf('viewing', 'buyer', esc(t.buyer.full_name.split(' ')[0]))}${conf('viewing', 'seller', esc(t.seller.full_name.split(' ')[0]))}${conf('handover', 'buyer', esc(t.buyer.full_name.split(' ')[0]))}${conf('handover', 'seller', esc(t.seller.full_name.split(' ')[0]))}</div>` : ''}
+    ${rating}${acts ? `<div class="row">${acts}</div>` : ''}
+    <details><summary class="small muted" style="cursor:pointer">History (${t.history.length})</summary><ol class="log">${t.history.map(x => `<li><span class="mono">${fmtWhen(x.at)}</span> · ${x.transition} (${x.actor})</li>`).join('')}</ol></details></article>`;
+}
+
+async function vAdmin() {
+  const tab = S.adminTab;
+  const [queue, reports, disputes] = await Promise.all([api('GET', '/admin/listings?status=pending'), api('GET', '/admin/reports'), api('GET', '/admin/transactions?state=disputed')]);
+  const sub = [['queue', 'Pending listings', queue.length], ['reports', 'Reports', reports.length], ['disputes', 'Escrow disputes', disputes.length], ['users', 'Accounts'], ['audit', 'Audit log'], ['integrations', 'Integrations']];
+  let body = '';
+  const checkLabel = { lease_names_lister: 'Lease authority letter names the lister (or their client) as landlord or agent', name_matches: 'Name on title matches the owner named on the listing', parcel_matches: 'Parcel / LR number and size match the listing', search_recent: 'Registry search is dated within the last 30 days and shows no caveat' };
+  if (tab === 'queue') body = queue.map(l => `<article class="panel qcard"><div class="ph">${l.photos[0] ? `<img src="${esc(l.photos[0].url)}" alt="">` : 'No photo'}</div>
+    <div class="stack" style="gap:8px"><div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span><span class="small muted">submitted ${ago(l.created_at)} · ${l.country}</span></div><h3>${esc(l.title)}</h3>
+      <div class="small muted">${esc(l.place_name)} · <span class="mono">${money(l.price_minor, l.currency)}</span> · ${l.size} ${l.size_unit} · by ${esc(l.owner.full_name)} (${l.owner.role})${l.client_owner_name ? ` for ${esc(l.client_owner_name)}` : ''}</div>
+      <ul class="checks"><li>${l.owner_verified ? '<span class="yes">✓</span> Lister ID and phone verified' : '<span class="no">✗</span> Lister not verified'}</li>
+        <li>${l.documents.length ? `<span class="yes">✓</span> Documents: ${l.documents.map(d => `<a href="${API}/listings/${l.id}/documents/${d.id || ''}" class="mono">${d.kind}</a>`).join(', ')}` : (l.type === 'rent' ? '<span class="no">–</span> No document (optional for rentals)' : '<span style="color:var(--bad)">✗</span> No ownership document (required for sale and land)')}</li>
+        <li>${l.duplicate_photo_listings.length ? `<span style="color:var(--warn)">!</span> Photos also appear on ${l.duplicate_photo_listings.length} other listing(s)` : '<span class="yes">✓</span> No duplicate photos'}</li></ul>
+      <div class="chk"><span class="label">Document check (tick after reading the document)</span>${l.required_checks.map(k => `<label><input type="checkbox" data-chk="${k}" data-id="${l.id}"><span>${checkLabel[k] || k}</span></label>`).join('')}</div></div>
+    <div class="stack" style="gap:6px;min-width:150px"><button class="btn primary" data-act="approve" data-id="${l.id}">Approve</button><select id="rej-${l.id}" style="padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--bg)"><option>Missing proof of ownership</option><option>Duplicate or stolen photos</option><option>Price or details look misleading</option><option>Owner name does not match title</option><option>Registry search too old or shows a caveat</option></select><button class="btn danger" data-act="reject" data-id="${l.id}">Reject</button></div></article>`).join('') || '<div class="empty">The review queue is empty.</div>';
+  if (tab === 'reports') body = reports.map(r => `<article class="panel row" style="justify-content:space-between"><div><b>${esc(r.listing_title || 'User report')}</b> <span class="small muted">· by ${esc(r.reporter_name)} ${ago(new Date(r.created_at).toISOString())}</span><p>“${esc(r.reason)}”${r.details ? ` — ${esc(r.details)}` : ''}</p></div><div class="row"><button class="btn" data-act="report-resolve" data-id="${r.id}" data-a="dismiss">Dismiss</button><button class="btn danger" data-act="report-resolve" data-id="${r.id}" data-a="take_down">Take listing down</button></div></article>`).join('') || '<div class="empty">No open reports.</div>';
+  if (tab === 'disputes') body = disputes.map(txnCard).join('') || '<div class="empty">No escrow disputes.</div>';
+  if (tab === 'users') { const users = await api('GET', '/admin/users'); body = `<div class="panel tbl-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Verification</th><th>Rating</th><th>Listings</th><th></th></tr></thead><tbody>${users.map(x => `<tr><td>${esc(x.full_name)}</td><td class="mono small">${esc(x.phone_e164)}</td><td>${x.role}</td><td>${x.verified ? '<span class="pill ok">ID + phone</span>' : `<span class="pill warn">${x.kyc_status}</span>`}</td><td>${x.rating.count ? `<span class="star">★</span> ${x.rating.avg} (${x.rating.count})` : '—'}</td><td class="num">${x.listings}</td><td>${x.role === 'admin' ? '' : `<button class="btn small ${x.suspended ? '' : 'danger'}" data-act="suspend" data-id="${x.id}" data-on="${!x.suspended}">${x.suspended ? 'Reinstate' : 'Suspend'}</button>`}</td></tr>`).join('')}</tbody></table></div>`; }
+  if (tab === 'audit') { const a = await api('GET', '/admin/audit'); body = `<div class="panel tbl-wrap"><table><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead><tbody>${a.items.map(x => `<tr><td class="mono small">${fmtWhen(x.created_at)}</td><td class="mono small">${x.actor_id ? x.actor_id.slice(0, 8) : 'system'}</td><td>${esc(x.action)}</td><td class="mono small">${x.target_type} ${x.target_id.slice(0, 8)}</td><td class="small muted">${esc(JSON.stringify(x.detail))}</td></tr>`).join('')}</tbody></table></div>`; }
+  if (tab === 'integrations') { const i = await api('GET', '/admin/integrations'); body = `<div class="panel tbl-wrap"><p class="small muted" style="margin-bottom:10px">Each provider goes live when its keys are entered in the backend's <span class="mono">.env</span>. Until then it runs in sandbox mode.</p><table><thead><tr><th>Kind</th><th>Provider</th><th>Mode</th><th>Unlock with</th></tr></thead><tbody>${i.map(x => `<tr><td>${x.kind}</td><td class="mono">${x.id}</td><td>${x.mode === 'live' ? '<span class="pill ok">live</span>' : '<span class="pill warn">sandbox</span>'}</td><td class="mono small">${x.unlock_with.join(', ')}</td></tr>`).join('')}</tbody></table></div>`; }
+  return `<div class="page-head"><div><h2>Moderation</h2><p class="muted">Nothing goes live, and no disputed money moves, without an admin decision. Every decision is logged.</p></div></div>
+  <div class="subtabs">${sub.map(([k, n, c]) => `<button class="chip" data-act="atab" data-t="${k}" aria-pressed="${tab === k}">${n}${c !== undefined ? ` <span class="mono">${c}</span>` : ''}</button>`).join('')}</div><div class="stack">${body}</div>`;
+}
+
+/* ---------- Modals ---------- */
+function openVerify() { const c = C(); modal(`<h3>Verify your account</h3><p class="muted small">Every account confirms an identity document and a phone number before it can list, message or pay.</p>
+  <form class="stack" data-form="kyc"><label class="field"><span>Document</span><select id="v-doc" name="document_type">${c.id_document_types.map(d => `<option value="${d}">${docLabel(d)}</option>`).join('')}</select></label>
+  <label class="field"><span>Document number</span><input id="v-id" name="document_number" required minlength="6" placeholder="As printed on the document"></label>
+  <p class="hint small muted">You will be taken to the verification provider for ${esc(c.name)} to photograph the document and take a selfie. In sandbox mode this verifies immediately.</p>
+  <div class="row"><button class="btn primary">Start verification</button><button type="button" class="btn ghost" data-act="close-modal">Not now</button></div></form>`); }
+function openPay(l) { const c = C(), dep = l.type === 'rent' ? l.price_minor * (1 + (c.policy.rent_deposit_months || 1)) : Math.round(l.price_minor * (c.policy.deposit_pct_sale || 10) / 100);
+  modal(`<h3>Pay into escrow</h3><p class="muted small">${esc(l.title)} · ${esc(l.place_name)}</p><div class="notice escrow"><span class="label">Amount (at the listed price; an accepted offer changes it)</span><div class="price">${money(dep, l.currency)}</div></div>
+  <form class="stack" data-form="pay" data-id="${l.id}"><label class="field"><span>Pay with</span><select id="p-method" name="gateway">${c.payment_methods.map(m => `<option value="${m}">${methodLabel(m)}</option>`).join('')}</select></label>
+  <label class="field"><span>Mobile number, account or card token</span><input id="p-acct" name="payer_account" required value="${esc(S.phone || '')}" placeholder="${esc(c.phone_prefix)}…"><span class="hint">Mobile money sends a prompt to this number. Cards and bank transfers open the provider's page.</span></label>
+  <div class="row"><button class="btn escrow">Pay</button><button type="button" class="btn ghost" data-act="close-modal">Cancel</button></div></form>`); }
+function openReport(l) { modal(`<h3>Report this listing</h3><form class="stack" data-form="report" data-id="${l.id}"><label class="field"><span>What is wrong?</span><select id="r-reason" name="reason"><option>Asked to pay outside the app</option><option>Photos copied from another listing</option><option>Owner is not who they claim</option><option>Property does not exist or is already taken</option><option>Price is misleading</option></select></label><label class="field"><span>Details (optional)</span><textarea id="r-det" name="details" rows="3"></textarea></label><div class="row"><button class="btn danger">Send report</button><button type="button" class="btn ghost" data-act="close-modal">Cancel</button></div></form>`); }
+function openDispute(id) { modal(`<h3>Request a refund</h3><p class="muted small">The seller can agree, or an admin decides. Chat history and escrow events are the evidence.</p><form class="stack" data-form="dispute" data-id="${id}"><label class="field"><span>What happened?</span><textarea id="d-reason" name="reason" rows="3" required minlength="10"></textarea></label><div class="row"><button class="btn danger">Open dispute</button><button type="button" class="btn ghost" data-act="close-modal">Cancel</button></div></form>`); }
+async function openRecord(id) { const r = await api('GET', `/transactions/${id}/record`); const text = Object.entries(r).map(([k, v]) => `${k.padEnd(20)} ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n'); modal(`<h3>Deal record ${esc(r.agreement_ref)}</h3><pre class="record" id="record-text">${esc(text)}</pre><div class="row"><button class="btn primary" data-act="copy" data-text="${esc(text)}">Copy record</button><button class="btn ghost" data-act="close-modal">Close</button></div>`); }
+
+/* ---------- Render & boot ---------- */
+const VIEWS = { signin: vSignin, browse: vBrowse, listing: vListing, sell: vSell, messages: vMessages, escrow: vEscrow, admin: vAdmin };
+let rendering = false;
+async function render() {
+  if (!S.me && !['browse', 'listing', 'signin'].includes(S.view)) S.view = 'signin';
+  renderChrome();
+  try { $('#app').innerHTML = await (VIEWS[S.view] || vBrowse)(); }
+  catch (e) { if (e.status === 401) { TOKEN = null; localStorage.removeItem('noble_token'); S.me = null; S.view = 'signin'; renderChrome(); $('#app').innerHTML = await vSignin(); toast('Please sign in again.', true); } else $('#app').innerHTML = `<div class="empty">Could not load: ${esc(e.message)}<br><span class="small">API: ${esc(API)}</span></div>`; }
+  const m = $('#msgs'); if (m) m.scrollTop = m.scrollHeight;
+  try { history.replaceState(null, '', S.view === 'listing' && S.selected ? '#' + S.selected : location.pathname + location.search); } catch {}
+}
+async function refreshMe() { if (!TOKEN) { S.me = null; return; } try { S.me = await api('GET', '/me'); } catch (e) { if (e.status === 401 || e.status === 403) { TOKEN = null; localStorage.removeItem('noble_token'); S.me = null; if (e.status === 403) toast(e.message, true); } } }
+async function act(fn) { try { await fn(); } catch (e) { if (e.status === 403 && /verification/.test(e.message)) openVerify(); else if (e.status === 401) { S.view = 'signin'; await render(); toast('Sign in to do that.', true); } else toast(e.message || 'Something went wrong', true); } }
+const needAuth = () => { if (!S.me) { S.view = 'signin'; render(); toast('Sign in to do that.', true); return false; } return true; };
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, id = el.dataset.id;
+  if (a === 'close-scrim') { if (e.target === el) modal(''); return; }
+  act(async () => {
+    switch (a) {
+      case 'go': S.view = el.dataset.view; break;
+      case 'close-modal': modal(''); return;
+      case 'signout': TOKEN = null; localStorage.removeItem('noble_token'); S.me = null; S.view = 'browse'; break;
+      case 'otp-reset': S.otpSent = false; S.devCode = null; break;
+      case 'filter': S.q.type = el.dataset.f; break;
+      case 'savedonly': S.q.saved = !S.q.saved; break;
+      case 'select': S.selected = id; break;
+      case 'open': S.selected = id; S.photoIdx = 0; S.view = 'listing'; window.scrollTo(0, 0); break;
+      case 'ph': S.photoIdx = +el.dataset.i; break;
+      case 'verify': openVerify(); return;
+      case 'save': { if (!needAuth()) return; await api(el.getAttribute('aria-pressed') === 'true' || /Saved/.test(el.textContent) ? 'DELETE' : 'PUT', `/listings/${id}/save`); break; }
+      case 'copylink': await navigator.clipboard.writeText(location.href.split('#')[0] + '#' + id).catch(() => {}); toast('Link copied'); return;
+      case 'copy': await navigator.clipboard.writeText(el.dataset.text).catch(() => {}); toast('Copied'); return;
+      case 'message': { if (!needAuth()) return; const th = await api('POST', '/threads', { listing_id: id }); S.thread = th.id; S.view = 'messages'; break; }
+      case 'pay': if (!needAuth()) return; openPay(S.cache.listing); return;
+      case 'report': if (!needAuth()) return; openReport(S.cache.listing); return;
+      case 'status': await api('POST', `/listings/${id}/status`, { action: el.dataset.a }); toast('Updated'); break;
+      case 'thread': S.thread = id; break;
+      case 'decide': await api('POST', `/messages/${id}/decision`, { decision: el.dataset.d }); break;
+      case 'transition': await api('POST', `/transactions/${id}/transitions`, { transition: el.dataset.t }); toast('Done'); break;
+      case 'dispute': openDispute(id); return;
+      case 'resolve': await api('POST', `/admin/transactions/${id}/resolve`, { transition: el.dataset.t }); toast('Resolved'); break;
+      case 'record': await openRecord(id); return;
+      case 'rate': await api('POST', `/transactions/${id}/rating`, { stars: +el.dataset.stars }); toast('Thanks, your rating is saved.'); break;
+      case 'atab': S.adminTab = el.dataset.t; break;
+      case 'approve': { const checks = Object.fromEntries([...document.querySelectorAll(`input[data-chk][data-id="${id}"]`)].map(i => [i.dataset.chk, i.checked])); await api('POST', `/admin/listings/${id}/review`, { decision: 'approve', checks }); toast('Listing approved and live.'); break; }
+      case 'reject': await api('POST', `/admin/listings/${id}/review`, { decision: 'reject', reject_reason: $('#rej-' + id).value }); toast('Listing rejected.'); break;
+      case 'report-resolve': await api('POST', `/admin/reports/${id}/resolve`, { action: el.dataset.a }); break;
+      case 'suspend': await api('POST', `/admin/users/${id}/suspend`, { suspended: el.dataset.on === 'true', reason: 'policy' }); break;
+      case 'pick': { const pt = el.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const p = pt.matrixTransform(el.getScreenCTM().inverse()); keepDraft(); Object.assign(S.draft, fromXY(p.x, p.y)); break; }
+      default: return;
+    }
+    await render();
+  });
+});
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"][data-act]') && e.target.tagName !== 'BUTTON') { e.preventDefault(); e.target.click(); } if (e.key === 'Escape') modal(''); });
+function keepDraft() { const f = document.querySelector('form[data-form="listing"]'); if (!f) return; const fd = new FormData(f); for (const [k, v] of fd) S.draft[k] = v; }
+let qTimer;
+document.addEventListener('input', e => { if (e.target.id === 'q-text') { S.q.text = e.target.value; clearTimeout(qTimer); qTimer = setTimeout(async () => { const r = await api('GET', `/listings?${new URLSearchParams({ country: C().code, q: S.q.text, ...(S.q.type !== 'all' ? { type: S.q.type } : {}), sort: S.q.sort })}`); const lg = $('#ledger'); if (lg) lg.innerHTML = r.items.map(card).join('') || '<div class="empty">Nothing matches.</div>'; }, 250); } });
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'country') { S.country = t.value; localStorage.setItem('noble_country', S.country); S.q = { ...S.q, min: '', max: '' }; if (S.view === 'listing') S.view = 'browse'; return render(); }
+  if (t.id === 'si-country') { S.country = t.value; return; }
+  if (t.id === 'f-type') { keepDraft(); return render(); }
+  const qmap = { 'q-min': 'min', 'q-max': 'max', 'q-sort': 'sort', 'q-beds': 'beds' };
+  if (qmap[t.id]) { S.q[qmap[t.id]] = t.value; return render(); }
+  if (t.dataset.upload) act(async () => {
+    const file = t.files[0]; if (!file) return;
+    const bytes = await file.arrayBuffer();
+    if (t.dataset.upload === 'photo') { const r = await api('POST', `/listings/${t.dataset.id}/photos`, undefined, { raw: bytes, contentType: file.type || 'image/jpeg' }); toast(r.duplicate_of.length ? 'Photo added, but it also appears on another listing; the admin will see that.' : 'Photo added.'); }
+    else { const kind = $('#doc-kind').value; await api('POST', `/listings/${t.dataset.id}/documents?kind=${kind}`, undefined, { raw: bytes, contentType: file.type || 'application/pdf' }); toast('Document uploaded (encrypted). Admins check it before approval.'); }
+    await render();
+  });
+});
+document.addEventListener('submit', e => {
+  const f = e.target; e.preventDefault(); const fd = new FormData(f), kind = f.dataset.form, b = Object.fromEntries(fd);
+  act(async () => {
+    if (kind === 'otp') {
+      S.phone = String(b.phone).replace(/\s+/g, ''); S.country = b.country;
+      if (!S.otpSent) { const r = await api('POST', '/auth/otp', { phone_e164: S.phone }); S.otpSent = true; S.devCode = r.dev_code || null; toast(r.dev_code ? 'Development mode: code shown on screen.' : 'Code sent by SMS.'); }
+      else { const r = await api('POST', '/auth/otp/verify', { phone_e164: S.phone, code: b.code, country: b.country, full_name: b.full_name, role: b.role }); TOKEN = r.token; localStorage.setItem('noble_token', TOKEN); S.me = r.user; S.otpSent = false; S.devCode = null; S.view = 'browse'; toast(`Signed in as ${r.user.full_name}.`); if (!r.user.verified && r.user.role !== 'admin') setTimeout(openVerify, 300); }
+    } else if (kind === 'kyc') { const r = await api('POST', '/auth/kyc', { document_type: b.document_type, document_number: b.document_number }); modal(''); if (r.redirect_url) { window.open(r.redirect_url, '_blank'); toast('Finish verification with the provider, then refresh.'); } else toast(r.status === 'verified' ? 'Verified. You can now list, message and pay.' : `Verification ${r.status}.`); await refreshMe(); }
+    else if (kind === 'offer') { if (!needAuth()) return; const amt = Math.round(+b.amt * 100); if (!(amt > 0)) throw new Error('Enter an offer amount'); const th = f.dataset.thread ? { id: f.dataset.thread } : await api('POST', '/threads', { listing_id: f.dataset.id }); await api('POST', `/threads/${th.id}/messages`, { kind: 'offer', offer_minor: amt }); S.thread = th.id; S.view = 'messages'; toast('Offer sent.'); }
+    else if (kind === 'msg') { const text = String(b.text || '').trim(); if (!text) return; await api('POST', `/threads/${f.dataset.id}/messages`, { kind: 'text', body: text }); }
+    else if (kind === 'viewing') { if (!b.when) throw new Error('Pick a date and time'); await api('POST', `/threads/${f.dataset.id}/messages`, { kind: 'viewing', viewing_at: new Date(b.when).toISOString() }); toast('Viewing proposed.'); }
+    else if (kind === 'pay') { const r = await api('POST', '/transactions', { listing_id: f.dataset.id, gateway: b.gateway, payer_account: b.payer_account, idempotency_key: crypto.randomUUID() }); modal(''); S.view = 'escrow'; if (r.redirect_url && r.state === 'payment_pending') { window.open(r.redirect_url, '_blank'); toast('Complete the payment with the provider.'); } else toast(r.state === 'held' ? `${money(r.amount_minor, r.currency)} is now held in escrow.` : `Payment ${r.state.replace('_', ' ')}: check your phone for the prompt.`); }
+    else if (kind === 'report') { await api('POST', `/listings/${f.dataset.id}/report`, { reason: b.reason, details: b.details }); modal(''); toast('Report sent to the moderation team.'); }
+    else if (kind === 'dispute') { await api('POST', `/transactions/${f.dataset.id}/transitions`, { transition: 'open_dispute', reason: b.reason }); modal(''); toast('Refund requested. The seller or an admin will respond.'); }
+    else if (kind === 'listing') {
+      keepDraft(); const d = S.draft;
+      const body = { type: b.type, title: b.title, price_minor: Math.round(+b.price * 100), size: +b.size, size_unit: b.size_unit, bedrooms: +b.bedrooms || 0, title_status: b.title_status, place_name: b.place_name, address_private: b.address_private, description: b.description, client_owner_name: b.client_owner_name };
+      if (d.lat != null) { body.lat = d.lat; body.lng = d.lng; } else if (b.address_private) body.address = b.address_private; else throw new Error('Pin the location on the map or enter the address');
+      const l = await api('POST', '/listings', body); S.draft = null; S.selected = l.id; S.view = 'listing'; toast('Submitted. Add photos and the ownership document; an admin reviews it before it goes live.');
+    }
+    await render();
+  });
+});
+
+(async () => {
+  try { S.countries = await api('GET', '/countries'); } catch (e) { $('#app').innerHTML = `<div class="empty">Cannot reach the Noble API at <span class="mono">${esc(API)}</span>.<br><span class="small">Start it with <span class="mono">cd backend && node src/server.js</span>, or open this page with <span class="mono">?api=https://your-api</span>.</span></div>`; return; }
+  if (!S.countries.find(c => c.code === S.country)) S.country = S.countries[0].code;
+  await refreshMe();
+  const h = location.hash.slice(1); if (/^[0-9a-f-]{36}$/.test(h)) { S.selected = h; S.view = 'listing'; }
+  await render();
+})();
+})();
+</script>
+</body>
+</html>

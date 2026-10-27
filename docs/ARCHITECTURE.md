@@ -93,19 +93,22 @@ initiated ─request_collection→ payment_pending ─confirm_collection (webhoo
 
 ```
 noble/
-├── prototype/        reference UI (this repo today)
+├── prototype/        standalone demo with seeded data (no backend needed)
+├── web/              the web client; talks to the API; served at /app
 ├── backend/
-│   ├── schema.sql    PostgreSQL + PostGIS
-│   ├── openapi.yaml  API contract
-│   └── src/          escrow.js (transaction process), adapters.js (provider contracts)
+│   ├── schema.sql           PostgreSQL + PostGIS (production scale)
+│   ├── schema.sqlite.sql    SQLite edition used by the bundled server
+│   ├── openapi.yaml         API contract
+│   ├── .env.example         every provider key and what it unlocks
+│   └── src/                 server, routes, escrow.js, adapters/ (payments, kyc, sms, maps, storage)
 ├── docs/             BLUEPRINT, ARCHITECTURE, LANDSCAPE
-└── apps/             mobile, web, admin (to come)
+└── apps/mobile       React Native client (to come; same API)
 ```
 
 ## Delivery plan
 
-1. **Core** (now): schema, transaction process with tests, adapter contracts, OpenAPI.
-2. **Kenya pilot**: identity svc with Smile Identity + Africa's Talking, M-Pesa Daraja adapter against the sandbox, listings + moderation, web app from the prototype.
+1. **Core** (done): schema, transaction process with tests, adapters with sandbox fallbacks, OpenAPI, runnable API, web client.
+2. **Kenya pilot**: enter Smile Identity, Africa's Talking and M-Pesa Daraja sandbox keys; run against Safaricom's sandbox; register with the data commissioner; agree the escrow partner.
 3. **Hardening**: reconciliation job, scheduler, audit, pen test, data-protection registration.
 4. **Second country** (Uganda or Nigeria): prove that adding a country is a `countries` row, two adapters and a locale file.
 5. **Mobile app**, then UK/US with Stripe manual capture and Connect.
