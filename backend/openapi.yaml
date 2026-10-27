@@ -1,0 +1,302 @@
+openapi: 3.1.0
+info:
+  title: Noble API
+  version: 0.1.0
+  description: >
+    Property marketplace with verified accounts, moderated listings, in-app offers and viewings,
+    and escrow. Money amounts are integers in minor units with an ISO 4217 currency.
+    All state changes on a transaction go through POST /transactions/{id}/transitions and are
+    validated by the transaction process in backend/src/escrow.js.
+servers:
+  - url: https://api.noble.example/v1
+security:
+  - bearerAuth: []
+tags:
+  - { name: auth }
+  - { name: listings }
+  - { name: threads }
+  - { name: transactions }
+  - { name: admin }
+  - { name: webhooks }
+
+paths:
+  /auth/otp:
+    post:
+      tags: [auth]
+      summary: Send an SMS code to a phone number
+      security: []
+      requestBody: { $ref: '#/components/requestBodies/Phone' }
+      responses: { '204': { description: Sent }, '429': { $ref: '#/components/responses/RateLimited' } }
+  /auth/otp/verify:
+    post:
+      tags: [auth]
+      summary: Exchange a code for a session token
+      security: []
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [phone_e164, code], properties: { phone_e164: { type: string }, code: { type: string } } } } }
+      responses: { '200': { description: Token, content: { application/json: { schema: { type: object, properties: { token: { type: string }, user: { $ref: '#/components/schemas/User' } } } } } } }
+  /auth/kyc:
+    post:
+      tags: [auth]
+      summary: Start an ID document and liveness check with the country's KYC provider
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [document_type], properties: { document_type: { type: string } } } } }
+      responses: { '202': { description: Check started, content: { application/json: { schema: { type: object, properties: { check_id: { type: string }, redirect_url: { type: string, format: uri } } } } } } }
+
+  /countries:
+    get:
+      tags: [listings]
+      summary: Countries Noble operates in, with currency, payment methods and policy
+      security: []
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Country' } } } } } }
+
+  /listings:
+    get:
+      tags: [listings]
+      summary: Search approved listings
+      security: []
+      parameters:
+        - { in: query, name: country, required: true, schema: { type: string, example: KE } }
+        - { in: query, name: q, schema: { type: string } }
+        - { in: query, name: type, schema: { type: string, enum: [sale, rent, land] } }
+        - { in: query, name: near, schema: { type: string, example: '-1.29,36.82' }, description: lat,lng }
+        - { in: query, name: radius_km, schema: { type: number, default: 10 } }
+        - { in: query, name: min_price, schema: { type: integer } }
+        - { in: query, name: max_price, schema: { type: integer } }
+        - { in: query, name: beds, schema: { type: integer } }
+        - { in: query, name: sort, schema: { type: string, enum: [newest, price_asc, price_desc, popular] } }
+        - { in: query, name: cursor, schema: { type: string } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: '#/components/schemas/Listing' } }, next_cursor: { type: string } } } } } } }
+    post:
+      tags: [listings]
+      summary: Submit a listing for review (seller or agent; verified accounts only; 3 per 24 h)
+      requestBody: { content: { application/json: { schema: { $ref: '#/components/schemas/ListingInput' } } } }
+      responses: { '201': { description: Pending review, content: { application/json: { schema: { $ref: '#/components/schemas/Listing' } } } }, '403': { $ref: '#/components/responses/NotVerified' }, '429': { $ref: '#/components/responses/RateLimited' } }
+  /listings/{id}:
+    get:
+      tags: [listings]
+      summary: One listing. The private address is included only for a buyer whose escrow is held.
+      security: []
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Listing' } } } } }
+  /listings/{id}/status:
+    post:
+      tags: [listings]
+      summary: Owner lifecycle. pause, resume, close (sold/let), relist (back to pending).
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { application/json: { schema: { type: object, required: [action], properties: { action: { type: string, enum: [pause, resume, close, relist] } } } } } }
+      responses: { '200': { description: OK } }
+  /listings/{id}/photos:
+    post:
+      tags: [listings]
+      summary: Upload a photo. The server computes a perceptual hash and flags near-duplicates.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { multipart/form-data: { schema: { type: object, properties: { file: { type: string, format: binary } } } } } }
+      responses: { '201': { description: Stored, content: { application/json: { schema: { type: object, properties: { id: { type: string }, duplicate_of: { type: array, items: { type: string } } } } } } } }
+  /listings/{id}/documents:
+    post:
+      tags: [listings]
+      summary: Upload proof of ownership (encrypted at rest; visible to admins only)
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { multipart/form-data: { schema: { type: object, properties: { kind: { type: string, enum: [title_deed, registry_search, lease_authority, allotment_letter] }, file: { type: string, format: binary } } } } } }
+      responses: { '201': { description: Stored } }
+  /listings/{id}/save:
+    put: { tags: [listings], summary: Save a listing, parameters: [{ $ref: '#/components/parameters/Id' }], responses: { '204': { description: Saved } } }
+    delete: { tags: [listings], summary: Unsave, parameters: [{ $ref: '#/components/parameters/Id' }], responses: { '204': { description: Removed } } }
+  /listings/{id}/report:
+    post:
+      tags: [listings]
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { application/json: { schema: { type: object, required: [reason], properties: { reason: { type: string }, details: { type: string } } } } } }
+      responses: { '202': { description: Queued for moderation } }
+
+  /threads:
+    post:
+      tags: [threads]
+      summary: Open (or return) the thread between the caller and a listing's owner
+      requestBody: { content: { application/json: { schema: { type: object, required: [listing_id], properties: { listing_id: { type: string } } } } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Thread' } } } } }
+  /threads/{id}/messages:
+    post:
+      tags: [threads]
+      summary: Send text (contact details are masked), an offer, or a viewing proposal
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - { type: object, required: [kind, body], properties: { kind: { const: text }, body: { type: string, maxLength: 2000 } } }
+                - { type: object, required: [kind, offer_minor], properties: { kind: { const: offer }, offer_minor: { type: integer, minimum: 1 } } }
+                - { type: object, required: [kind, viewing_at], properties: { kind: { const: viewing }, viewing_at: { type: string, format: date-time } } }
+      responses: { '201': { description: Sent, content: { application/json: { schema: { $ref: '#/components/schemas/Message' } } } }, '429': { $ref: '#/components/responses/RateLimited' } }
+  /messages/{id}/decision:
+    post:
+      tags: [threads]
+      summary: Accept or decline an offer or viewing proposal (the other party only)
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { application/json: { schema: { type: object, required: [decision], properties: { decision: { type: string, enum: [accepted, declined] } } } } } }
+      responses: { '200': { description: OK } }
+
+  /transactions:
+    post:
+      tags: [transactions]
+      summary: Start escrow for a listing at the agreed price and request collection
+      description: Creates the transaction in `initiated`, computes the amount to hold from country policy, then applies `request_collection` with the chosen gateway.
+      requestBody:
+        content: { application/json: { schema: { type: object, required: [listing_id, gateway, payer_account, idempotency_key], properties: { listing_id: { type: string }, gateway: { type: string }, payer_account: { type: string }, idempotency_key: { type: string } } } } }
+      responses: { '201': { description: Collection requested, content: { application/json: { schema: { $ref: '#/components/schemas/Transaction' } } } }, '403': { $ref: '#/components/responses/NotVerified' } }
+  /transactions/{id}:
+    get: { tags: [transactions], parameters: [{ $ref: '#/components/parameters/Id' }], responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Transaction' } } } } } }
+  /transactions/{id}/transitions:
+    post:
+      tags: [transactions]
+      summary: Apply a transition from the transaction process
+      description: Allowed names for a party are `confirm_viewing`, `confirm_handover`, `seller_cancel`, `open_dispute`, `seller_agrees_refund`. The response lists what the caller may do next.
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { application/json: { schema: { type: object, required: [transition], properties: { transition: { type: string }, reason: { type: string } } } } } }
+      responses:
+        '200': { description: Applied, content: { application/json: { schema: { $ref: '#/components/schemas/Transaction' } } } }
+        '409': { description: Transition not allowed from the current state, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /transactions/{id}/record:
+    get: { tags: [transactions], summary: Deal record (released transactions only), parameters: [{ $ref: '#/components/parameters/Id' }], responses: { '200': { description: OK, content: { application/pdf: {}, application/json: {} } } } }
+  /transactions/{id}/rating:
+    post:
+      tags: [transactions]
+      summary: Rate the other party (released transactions only, once per party)
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { application/json: { schema: { type: object, required: [stars], properties: { stars: { type: integer, minimum: 1, maximum: 5 }, comment: { type: string, maxLength: 500 } } } } } }
+      responses: { '201': { description: Saved } }
+
+  /admin/listings:
+    get: { tags: [admin], summary: Moderation queue, parameters: [{ in: query, name: status, schema: { type: string, default: pending } }], responses: { '200': { description: OK } } }
+  /admin/listings/{id}/review:
+    post:
+      tags: [admin]
+      summary: Approve (requires every document check ticked) or reject with a reason
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { application/json: { schema: { type: object, required: [decision], properties: { decision: { type: string, enum: [approve, reject] }, checks: { type: object, additionalProperties: { type: boolean } }, reject_reason: { type: string } } } } } }
+      responses: { '200': { description: OK }, '422': { description: Checks incomplete } }
+  /admin/transactions/{id}/resolve:
+    post:
+      tags: [admin]
+      summary: Resolve a dispute by applying `release` or `admin_refund`
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      requestBody: { content: { application/json: { schema: { type: object, required: [transition], properties: { transition: { type: string, enum: [release, admin_refund] }, note: { type: string } } } } } }
+      responses: { '200': { description: OK } }
+  /admin/users/{id}/suspend:
+    post: { tags: [admin], parameters: [{ $ref: '#/components/parameters/Id' }], requestBody: { content: { application/json: { schema: { type: object, properties: { suspended: { type: boolean }, reason: { type: string } } } } } }, responses: { '200': { description: OK } } }
+  /admin/audit:
+    get: { tags: [admin], parameters: [{ in: query, name: target_id, schema: { type: string } }, { in: query, name: cursor, schema: { type: string } }], responses: { '200': { description: OK } } }
+
+  /webhooks/payments/{gateway}:
+    post:
+      tags: [webhooks]
+      summary: Gateway callback. Signature verified by the adapter; event appended to payment_events; then `confirm_collection` or a payout/refund confirmation is applied.
+      security: []
+      parameters: [{ in: path, name: gateway, required: true, schema: { type: string } }]
+      responses: { '200': { description: Acknowledged (always 200 after persisting, so the gateway does not retry forever) } }
+  /webhooks/kyc/{provider}:
+    post:
+      tags: [webhooks]
+      security: []
+      parameters: [{ in: path, name: provider, required: true, schema: { type: string } }]
+      responses: { '200': { description: Acknowledged } }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  parameters:
+    Id: { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+  requestBodies:
+    Phone: { content: { application/json: { schema: { type: object, required: [phone_e164], properties: { phone_e164: { type: string, example: '+254712345678' } } } } } }
+  responses:
+    RateLimited: { description: Too many requests, headers: { Retry-After: { schema: { type: integer } } } }
+    NotVerified: { description: Account must complete ID and phone verification first }
+  schemas:
+    Error: { type: object, properties: { code: { type: string }, message: { type: string } } }
+    Country:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        currency: { type: string }
+        phone_prefix: { type: string }
+        id_document_types: { type: array, items: { type: string } }
+        payment_methods: { type: array, items: { type: string } }
+        land_registry: { type: string }
+        policy: { type: object, properties: { deposit_pct_sale: { type: number }, rent_deposit_months: { type: integer }, viewing_days: { type: integer }, handover_days: { type: integer }, commission_pct: { type: number } } }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        full_name: { type: string }
+        role: { type: string, enum: [buyer, seller, agent, admin] }
+        country: { type: string }
+        verified: { type: boolean }
+        rating: { type: object, properties: { avg: { type: number }, count: { type: integer } } }
+        deals_completed: { type: integer }
+        member_since: { type: string, format: date }
+    ListingInput:
+      type: object
+      required: [type, title, price_minor, currency, lat, lng, size, size_unit, title_status]
+      properties:
+        type: { type: string, enum: [sale, rent, land] }
+        title: { type: string, maxLength: 120 }
+        description: { type: string }
+        price_minor: { type: integer, minimum: 1 }
+        currency: { type: string }
+        lat: { type: number }
+        lng: { type: number }
+        address_private: { type: string }
+        size: { type: number }
+        size_unit: { type: string, enum: [sqm, sqft, acres, hectares] }
+        bedrooms: { type: integer }
+        title_status: { type: string }
+        client_owner_name: { type: string, description: Agents only; must match the ownership document }
+    Listing:
+      allOf:
+        - $ref: '#/components/schemas/ListingInput'
+        - type: object
+          properties:
+            id: { type: string }
+            status: { type: string, enum: [pending, approved, paused, closed, rejected, removed] }
+            place_name: { type: string }
+            photos: { type: array, items: { type: object, properties: { id: { type: string }, url: { type: string } } } }
+            ownership_verified: { type: boolean }
+            owner: { $ref: '#/components/schemas/User' }
+            stats: { type: object, properties: { views: { type: integer }, saves: { type: integer }, enquiries: { type: integer }, offers: { type: integer } } }
+            created_at: { type: string, format: date-time }
+    Thread:
+      type: object
+      properties: { id: { type: string }, listing_id: { type: string }, buyer: { $ref: '#/components/schemas/User' }, owner: { $ref: '#/components/schemas/User' }, messages: { type: array, items: { $ref: '#/components/schemas/Message' } } }
+    Message:
+      type: object
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [text, offer, viewing, system] }
+        sender_id: { type: string, nullable: true }
+        body: { type: string }
+        offer_minor: { type: integer }
+        viewing_at: { type: string, format: date-time }
+        decision: { type: string, enum: [pending, accepted, declined, expired] }
+        created_at: { type: string, format: date-time }
+    Transaction:
+      type: object
+      properties:
+        id: { type: string }
+        reference: { type: string, example: ESC-20481 }
+        listing_id: { type: string }
+        state: { type: string, enum: [initiated, payment_pending, held, viewing_confirmed, disputed, released, refunded, expired] }
+        agreed_price_minor: { type: integer }
+        amount_minor: { type: integer }
+        commission_minor: { type: integer }
+        currency: { type: string }
+        gateway: { type: string }
+        paid_at: { type: string, format: date-time }
+        viewing_deadline: { type: string, format: date-time }
+        handover_deadline: { type: string, format: date-time }
+        confirmations: { type: object, properties: { viewing_buyer: { type: boolean }, viewing_seller: { type: boolean }, handover_buyer: { type: boolean }, handover_seller: { type: boolean } } }
+        available_transitions: { type: array, items: { type: string }, description: What the caller may do now }
+        agreement_ref: { type: string }
+        history: { type: array, items: { type: object, properties: { at: { type: string, format: date-time }, transition: { type: string }, actor: { type: string } } } }
