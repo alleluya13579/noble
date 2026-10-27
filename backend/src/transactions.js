@@ -30,6 +30,7 @@ export function txnView(db, row, txn, user) {
     confirmations: { viewing_buyer: !!txn.viewing_buyer_at, viewing_seller: !!txn.viewing_seller_at, handover_buyer: !!txn.handover_buyer_at, handover_seller: !!txn.handover_seller_at },
     dispute: txn.disputeReason ? { reason: txn.disputeReason, opened_by: txn.disputeOpenedBy, opened_at: iso(txn.disputeOpenedAt) } : null,
     available_transitions: actor ? E.available(txn, actor).filter(n => !['confirm_collection', 'both_confirmed_viewing', 'auto_refund', 'expire_collection'].includes(n)) : [],
+    my_rating: user ? (db.get('SELECT stars FROM ratings WHERE transaction_id = ? AND from_user_id = ?', row.id, user.id)?.stars ?? null) : null,
     agreement_ref: txn.agreementRef || null, history: txn.history.map(h => ({ at: iso(h.at), from: h.from, to: h.to, transition: h.transition, actor: h.actor })) };
 }
 
