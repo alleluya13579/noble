@@ -6,6 +6,8 @@
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
+    "start": "node src/server.js",
+    "dev": "NOBLE_ENV=development node --watch src/server.js",
     "test": "node --test test/*.test.js"
   }
 }
