@@ -22,6 +22,21 @@ Use the **Viewing as** menu to switch between the demo accounts:
 
 Other things to try: `#l2` on the end of the URL opens that listing directly; the escrow card shows the auto-refund date; a released deal issues a copyable deal record.
 
+**Countries and languages.** The two selectors at the top switch the market (Kenya, Uganda, Nigeria, Ghana, South Africa, United Kingdom, United States) and the UI language (English, Kiswahili, Français). A country brings its own currency and price formatting, payment rails, accepted ID documents, land registry, agent register, deposit and deadline policy, and local areas on the map.
+
 Demo data lives in the browser's local storage. **Reset demo** restores it.
 
-See [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) for the product blueprint and the data model behind it.
+## Backend core
+
+`backend/` holds the production-grade pieces the prototype is a front for:
+
+- `schema.sql`: PostgreSQL + PostGIS schema with a `countries` table that carries all per-country settings, money in minor units, an append-only payment ledger, transaction history and an audit log.
+- `src/escrow.js`: the transaction process, a pure state machine with an explicit transition map. Money enters `held` only through a verified gateway webhook. Run `cd backend && npm test`.
+- `src/adapters.js`: contracts for payment gateways (M-Pesa, MTN MoMo, Paystack, Flutterwave, Stripe), KYC providers, SMS and maps, plus a registry and a mock gateway.
+- `openapi.yaml`: the API contract.
+
+## Docs
+
+- [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md): product blueprint and data model.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): services, transaction process, money, identity, compliance, delivery plan.
+- [`docs/LANDSCAPE.md`](docs/LANDSCAPE.md): the open-source systems reviewed and which of their designs Noble adopts.

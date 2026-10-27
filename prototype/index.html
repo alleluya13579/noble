@@ -294,18 +294,65 @@ const PERMS = [
   ['Resolve reports and escrow disputes',  0, 0, 0, 1],
   ['Suspend accounts, read the audit log', 0, 0, 0, 1]
 ];
-const PLACES = [
-  { name: 'Runda', x: 60, y: 9 }, { name: 'Westlands', x: 38, y: 24 }, { name: 'Lavington', x: 20, y: 31 },
-  { name: 'Kileleshwa', x: 34, y: 33 }, { name: 'Kilimani', x: 37, y: 41 }, { name: 'CBD', x: 52, y: 34 },
-  { name: 'Karen', x: 16, y: 54 }, { name: 'Embakasi', x: 76, y: 44 }, { name: 'Kitengela', x: 82, y: 60 }, { name: 'Ruiru', x: 86, y: 10 }
-];
-const COMMISSION = 0.05;
+/* Everything that differs by country lives here: the production schema has the same fields on the `countries` table. */
+const COUNTRIES = {
+  KE: { name: 'Kenya', city: 'Nairobi', currency: 'KES', locale: 'en-KE', phone: '+254 7xx xxx xxx', idDocs: ['National ID', 'Passport'], registry: 'Ministry of Lands (Ardhisasa)', agentReg: 'EARB',
+    pay: ['M-Pesa', 'Airtel Money', 'Card (Visa / Mastercard)'], unit: 'sqm', landUnit: 'acres',
+    policy: { commission: 0.05, depositPct: 0.10, rentDepositMonths: 1, viewingDays: 14, handoverDays: 30 },
+    places: [{ name: 'Runda', x: 60, y: 9 }, { name: 'Westlands', x: 38, y: 24 }, { name: 'Lavington', x: 20, y: 31 }, { name: 'Kileleshwa', x: 34, y: 33 }, { name: 'Kilimani', x: 37, y: 41 }, { name: 'CBD', x: 52, y: 34 }, { name: 'Karen', x: 16, y: 54 }, { name: 'Embakasi', x: 76, y: 44 }, { name: 'Kitengela', x: 82, y: 60 }, { name: 'Ruiru', x: 86, y: 10 }] },
+  UG: { name: 'Uganda', city: 'Kampala', currency: 'UGX', locale: 'en-UG', phone: '+256 7xx xxx xxx', idDocs: ['National ID', 'Passport'], registry: 'Ministry of Lands, Housing and Urban Development', agentReg: 'AREA Uganda',
+    pay: ['MTN MoMo', 'Airtel Money', 'Card (Visa / Mastercard)'], unit: 'sqm', landUnit: 'acres',
+    policy: { commission: 0.05, depositPct: 0.10, rentDepositMonths: 1, viewingDays: 14, handoverDays: 30 },
+    places: [{ name: 'Kololo', x: 55, y: 22 }, { name: 'Naguru', x: 68, y: 18 }, { name: 'Muyenga', x: 62, y: 46 }, { name: 'Ntinda', x: 78, y: 12 }, { name: 'Bukoto', x: 60, y: 10 }, { name: 'Central', x: 50, y: 34 }, { name: 'Munyonyo', x: 58, y: 60 }, { name: 'Kira', x: 88, y: 8 }, { name: 'Entebbe Rd', x: 36, y: 58 }, { name: 'Namugongo', x: 90, y: 24 }] },
+  NG: { name: 'Nigeria', city: 'Lagos', currency: 'NGN', locale: 'en-NG', phone: '+234 8xx xxx xxxx', idDocs: ['NIN slip', 'International passport', "Driver's licence"], registry: "Lagos State Lands Bureau (Governor's consent)", agentReg: 'ESVARBON',
+    pay: ['Bank transfer (Paystack)', 'Card (Verve / Visa / Mastercard)', 'USSD'], unit: 'sqm', landUnit: 'plots',
+    policy: { commission: 0.05, depositPct: 0.10, rentDepositMonths: 1, viewingDays: 14, handoverDays: 30 },
+    places: [{ name: 'Ikeja', x: 40, y: 10 }, { name: 'Yaba', x: 48, y: 30 }, { name: 'Surulere', x: 38, y: 36 }, { name: 'Victoria Island', x: 58, y: 50 }, { name: 'Ikoyi', x: 66, y: 44 }, { name: 'Lekki', x: 80, y: 48 }, { name: 'Ajah', x: 92, y: 54 }, { name: 'Magodo', x: 56, y: 8 }, { name: 'Gbagada', x: 60, y: 24 }, { name: 'Apapa', x: 30, y: 52 }] },
+  GH: { name: 'Ghana', city: 'Accra', currency: 'GHS', locale: 'en-GH', phone: '+233 2x xxx xxxx', idDocs: ['Ghana Card', 'Passport'], registry: 'Lands Commission', agentReg: 'GREDA',
+    pay: ['MTN MoMo', 'Card (Visa / Mastercard)'], unit: 'sqm', landUnit: 'plots',
+    policy: { commission: 0.05, depositPct: 0.10, rentDepositMonths: 1, viewingDays: 14, handoverDays: 30 },
+    places: [{ name: 'East Legon', x: 72, y: 16 }, { name: 'Cantonments', x: 60, y: 36 }, { name: 'Osu', x: 56, y: 50 }, { name: 'Airport', x: 64, y: 24 }, { name: 'Labone', x: 62, y: 46 }, { name: 'Dansoman', x: 24, y: 48 }, { name: 'Spintex', x: 84, y: 40 }, { name: 'Tema', x: 94, y: 30 }, { name: 'Achimota', x: 42, y: 14 }, { name: 'Madina', x: 80, y: 8 }] },
+  ZA: { name: 'South Africa', city: 'Johannesburg', currency: 'ZAR', locale: 'en-ZA', phone: '+27 8x xxx xxxx', idDocs: ['SA ID', 'Passport'], registry: 'Deeds Office', agentReg: 'PPRA',
+    pay: ['Card (Visa / Mastercard)', 'Instant EFT'], unit: 'sqm', landUnit: 'hectares',
+    policy: { commission: 0.04, depositPct: 0.10, rentDepositMonths: 1, viewingDays: 14, handoverDays: 30 },
+    places: [{ name: 'Sandton', x: 56, y: 14 }, { name: 'Rosebank', x: 52, y: 26 }, { name: 'Melville', x: 40, y: 36 }, { name: 'Braamfontein', x: 50, y: 40 }, { name: 'Soweto', x: 20, y: 54 }, { name: 'Fourways', x: 60, y: 4 }, { name: 'Bedfordview', x: 80, y: 38 }, { name: 'Randburg', x: 40, y: 18 }, { name: 'Midrand', x: 70, y: 2 }, { name: 'Alberton', x: 76, y: 60 }] },
+  GB: { name: 'United Kingdom', city: 'London', currency: 'GBP', locale: 'en-GB', phone: '+44 7xxx xxxxxx', idDocs: ['Passport', 'Driving licence', 'BRP'], registry: 'HM Land Registry', agentReg: 'Propertymark',
+    pay: ['Card (Visa / Mastercard)', 'Open Banking transfer'], unit: 'sqft', landUnit: 'acres',
+    policy: { commission: 0.03, depositPct: 0.10, rentDepositMonths: 1, viewingDays: 14, handoverDays: 30 },
+    places: [{ name: 'Camden', x: 48, y: 20 }, { name: 'Hackney', x: 66, y: 22 }, { name: 'Stratford', x: 84, y: 26 }, { name: 'Ealing', x: 14, y: 32 }, { name: 'Brixton', x: 52, y: 54 }, { name: 'Croydon', x: 56, y: 64 }, { name: 'Greenwich', x: 80, y: 46 }, { name: 'City', x: 56, y: 34 }, { name: 'Wimbledon', x: 32, y: 58 }, { name: 'Islington', x: 56, y: 18 }] },
+  US: { name: 'United States', city: 'New York', currency: 'USD', locale: 'en-US', phone: '+1 (xxx) xxx-xxxx', idDocs: ["Driver's licence", 'Passport', 'State ID'], registry: 'County Recorder', agentReg: 'State licence',
+    pay: ['Card (Visa / Mastercard / Amex)', 'ACH bank transfer'], unit: 'sqft', landUnit: 'acres',
+    policy: { commission: 0.03, depositPct: 0.10, rentDepositMonths: 1, viewingDays: 14, handoverDays: 30 },
+    places: [{ name: 'Harlem', x: 52, y: 6 }, { name: 'Upper West', x: 46, y: 16 }, { name: 'Midtown', x: 50, y: 28 }, { name: 'Chelsea', x: 44, y: 36 }, { name: 'Williamsburg', x: 66, y: 40 }, { name: 'Park Slope', x: 64, y: 56 }, { name: 'Astoria', x: 72, y: 20 }, { name: 'Jersey City', x: 26, y: 44 }, { name: 'Bronx', x: 62, y: 2 }, { name: 'Flushing', x: 92, y: 24 }] }
+};
 const LISTING_LIMIT = 3;           // listings per account per 24 hours
 const MSG_BURST = { n: 6, ms: 30000 };
-const VIEWING_DAYS = 14;           // auto-refund if no viewing confirmed within this many days of payment
-const HANDOVER_DAYS = 30;          // auto-refund if no handover confirmed within this many days of the viewing
 const H = 3600e3, D = 24 * H, now = Date.now();
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
+
+/* UI strings: English keys, translated where a dictionary has them. Production uses ICU message files per locale. */
+const LANGS = { en: 'English', sw: 'Kiswahili', fr: 'Français' };
+const I18N = {
+  sw: { 'Browse': 'Vinjari', 'My listings': 'Matangazo yangu', 'Messages': 'Ujumbe', 'Escrow': 'Amana', 'Moderation': 'Udhibiti', 'Blueprint': 'Mpango', 'Viewing as': 'Unatazama kama', 'Country': 'Nchi', 'Language': 'Lugha', 'Alerts': 'Arifa', 'Reset demo': 'Weka upya',
+    'ID & phone verified': 'Kitambulisho na simu vimethibitishwa', 'Unverified · verify now': 'Haijathibitishwa · thibitisha sasa', 'Homes and land in {city}': 'Nyumba na ardhi jijini {city}', 'approved listings': 'matangazo yaliyoidhinishwa', 'every owner ID-verified': 'kila mmiliki amethibitishwa', 'deposits held in escrow': 'amana zinashikiliwa',
+    'All': 'Zote', 'For sale': 'Inauzwa', 'For rent': 'Inakodishwa', 'Land': 'Ardhi', 'Saved': 'Zilizohifadhiwa', 'Search title, area or title status': 'Tafuta jina, eneo au hali ya hati', 'All areas': 'Maeneo yote', 'Newest first': 'Mpya kwanza', 'Price: low to high': 'Bei: chini kwenda juu', 'Price: high to low': 'Bei: juu kwenda chini', 'Most viewed': 'Zilizotazamwa zaidi', 'Any bedrooms': 'Vyumba vyovyote', 'results': 'matokeo', 'result': 'tokeo', '/ month': 'kwa mwezi', 'verified': 'imethibitishwa', 'bed': 'vyumba',
+    'All listings': 'Matangazo yote', 'Message': 'Tuma ujumbe', 'Save': 'Hifadhi', 'Copy link': 'Nakili kiungo', 'Your offer': 'Ofa yako', 'Send offer': 'Tuma ofa', 'Pay into escrow': 'Lipa kwenye amana', 'Report this listing': 'Ripoti tangazo hili', 'Listed by': 'Imetangazwa na', 'Location': 'Mahali', 'Size': 'Ukubwa', 'Title status': 'Hali ya hati', 'Ownership proof': 'Uthibitisho wa umiliki', 'Listed': 'Ilitangazwa', 'Checked by Noble': 'Imekaguliwa na Noble', 'Missing': 'Haipo', 'views': 'mitazamo',
+    'Held in escrow': 'Kwenye amana', 'Refund requested': 'Ombi la kurejeshewa', 'Released': 'Imetolewa', 'Refunded': 'Imerejeshwa', 'Paid into escrow': 'Imelipwa kwenye amana', 'Seller notified': 'Muuzaji amearifiwa', 'Viewing confirmed': 'Ukaguzi umethibitishwa', 'Handover confirmed': 'Makabidhiano yamethibitishwa', 'Released to seller': 'Imetolewa kwa muuzaji', 'Refunded to buyer': 'Imerejeshwa kwa mnunuzi', 'Held': 'Imeshikiliwa', 'Noble commission': 'Kamisheni ya Noble', 'Seller receives': 'Muuzaji anapokea', 'Confirm': 'Thibitisha', 'confirms viewing': 'anathibitisha ukaguzi', 'confirms handover': 'anathibitisha makabidhiano', 'View deal record': 'Tazama rekodi ya mkataba', 'Activity log': 'Kumbukumbu', 'done': 'imekamilika',
+    'Write a message': 'Andika ujumbe', 'Send': 'Tuma', 'Propose viewing': 'Pendekeza ukaguzi', 'Accept': 'Kubali', 'Decline': 'Kataa', 'Open listing': 'Fungua tangazo', 'Live': 'Hewani', 'Pending review': 'Inasubiri ukaguzi', 'Rejected': 'Imekataliwa', 'Taken down': 'Imeondolewa', 'Paused': 'Imesimamishwa', 'Sold': 'Imeuzwa', 'Let': 'Imekodishwa',
+    'Pending listings': 'Matangazo yanayosubiri', 'Reports': 'Ripoti', 'Escrow disputes': 'Migogoro ya amana', 'Accounts': 'Akaunti', 'Audit log': 'Kumbukumbu ya ukaguzi', 'Approve': 'Idhinisha', 'Reject': 'Kataa', 'Pay with': 'Lipa kwa', 'Pay': 'Lipa', 'Cancel': 'Ghairi', 'Amount': 'Kiasi', 'Verify your account': 'Thibitisha akaunti yako', 'Phone number': 'Nambari ya simu', 'Send code': 'Tuma msimbo', 'Code from SMS': 'Msimbo kutoka SMS', 'Verify': 'Thibitisha', 'Not now': 'Si sasa', 'New listing': 'Tangazo jipya', 'Submit for review': 'Wasilisha kukaguliwa' },
+  fr: { 'Browse': 'Parcourir', 'My listings': 'Mes annonces', 'Messages': 'Messages', 'Escrow': 'Séquestre', 'Moderation': 'Modération', 'Blueprint': 'Plan', 'Viewing as': 'Connecté en tant que', 'Country': 'Pays', 'Language': 'Langue', 'Alerts': 'Alertes', 'Reset demo': 'Réinitialiser',
+    'ID & phone verified': 'Identité et téléphone vérifiés', 'Unverified · verify now': 'Non vérifié · vérifier', 'Homes and land in {city}': 'Maisons et terrains à {city}', 'approved listings': 'annonces approuvées', 'every owner ID-verified': 'chaque propriétaire vérifié', 'deposits held in escrow': 'acomptes sous séquestre',
+    'All': 'Tout', 'For sale': 'À vendre', 'For rent': 'À louer', 'Land': 'Terrain', 'Saved': 'Enregistrés', 'Search title, area or title status': 'Rechercher titre, quartier ou statut', 'All areas': 'Tous les quartiers', 'Newest first': 'Plus récents', 'Price: low to high': 'Prix croissant', 'Price: high to low': 'Prix décroissant', 'Most viewed': 'Plus vus', 'Any bedrooms': 'Toutes chambres', 'results': 'résultats', 'result': 'résultat', '/ month': '/ mois', 'verified': 'vérifié', 'bed': 'ch.',
+    'All listings': 'Toutes les annonces', 'Message': 'Contacter', 'Save': 'Enregistrer', 'Copy link': 'Copier le lien', 'Your offer': 'Votre offre', 'Send offer': "Envoyer l'offre", 'Pay into escrow': 'Payer sous séquestre', 'Report this listing': 'Signaler cette annonce', 'Listed by': 'Publié par', 'Location': 'Emplacement', 'Size': 'Surface', 'Title status': 'Statut du titre', 'Ownership proof': 'Preuve de propriété', 'Listed': 'Publié', 'Checked by Noble': 'Vérifié par Noble', 'Missing': 'Manquant', 'views': 'vues',
+    'Held in escrow': 'Sous séquestre', 'Refund requested': 'Remboursement demandé', 'Released': 'Libéré', 'Refunded': 'Remboursé', 'Paid into escrow': 'Payé sous séquestre', 'Seller notified': 'Vendeur notifié', 'Viewing confirmed': 'Visite confirmée', 'Handover confirmed': 'Remise confirmée', 'Released to seller': 'Versé au vendeur', 'Refunded to buyer': "Remboursé à l'acheteur", 'Held': 'Bloqué', 'Noble commission': 'Commission Noble', 'Seller receives': 'Le vendeur reçoit', 'Confirm': 'Confirmer', 'confirms viewing': 'confirme la visite', 'confirms handover': 'confirme la remise', 'View deal record': 'Voir le dossier', 'Activity log': 'Historique', 'done': 'fait',
+    'Write a message': 'Écrire un message', 'Send': 'Envoyer', 'Propose viewing': 'Proposer une visite', 'Accept': 'Accepter', 'Decline': 'Refuser', 'Open listing': "Ouvrir l'annonce", 'Live': 'En ligne', 'Pending review': 'En attente', 'Rejected': 'Rejeté', 'Taken down': 'Retiré', 'Paused': 'En pause', 'Sold': 'Vendu', 'Let': 'Loué',
+    'Pending listings': 'Annonces en attente', 'Reports': 'Signalements', 'Escrow disputes': 'Litiges', 'Accounts': 'Comptes', 'Audit log': "Journal d'audit", 'Approve': 'Approuver', 'Reject': 'Rejeter', 'Pay with': 'Payer avec', 'Pay': 'Payer', 'Cancel': 'Annuler', 'Amount': 'Montant', 'Verify your account': 'Vérifiez votre compte', 'Phone number': 'Numéro de téléphone', 'Send code': 'Envoyer le code', 'Code from SMS': 'Code reçu par SMS', 'Verify': 'Vérifier', 'Not now': 'Plus tard', 'New listing': 'Nouvelle annonce', 'Submit for review': 'Soumettre' }
+};
+function T(key, vars) { let s = (I18N[S.lang] && I18N[S.lang][key]) || key; if (vars) for (const k in vars) s = s.replace('{' + k + '}', vars[k]); return s; }
+const C = () => COUNTRIES[S.country] || COUNTRIES.KE;
+const P = () => C().policy;
+const polOf = x => x.policy || COUNTRIES.KE.policy;
+const CENTERS = { KE: [-1.29, 36.82], UG: [0.35, 32.58], NG: [6.52, 3.38], GH: [5.60, -0.19], ZA: [-26.20, 28.05], GB: [51.51, -0.12], US: [40.73, -73.99] };
 
 /* ---------- Seed state ---------- */
 function seed() {
@@ -328,7 +375,14 @@ function seed() {
       L('l6', 'land', '5-acre agricultural parcel', 14000000, 'KES', 'Kitengela', 83, 58, 5, 'acres', 0, 'Freehold title deed', 'u3', 'approved', ['l3', 'l4', 'l5'], 260, 'Samuel Ole Sankale', 58),
       L('l9', 'rent', '1-bed near Yaya Centre', 55000, 'KES', 'Kilimani', 36, 43, 52, 'sqm', 1, 'Lease authority letter from owner', 'u2', 'closed', ['a7', 'a1'], 400, null, 301),
       L('l7', 'sale', '4-bed villa with garden', 61000000, 'KES', 'Runda', 61, 10, 0.75, 'acres', 4, 'Freehold title deed', 'u3', 'pending', ['h7', 'h2'], 3, 'Daniel Mutua', 0),
-      L('l8', 'land', '1-acre plot, ready title', 3100000, 'KES', 'Embakasi', 75, 45, 1, 'acres', 0, 'None provided', 'u3', 'pending', ['l6'], 1, 'Unknown', 0)
+      L('l8', 'land', '1-acre plot, ready title', 3100000, 'KES', 'Embakasi', 75, 45, 1, 'acres', 0, 'None provided', 'u3', 'pending', ['l6'], 1, 'Unknown', 0),
+      L('n1', 'rent', '2-bed flat in Lekki Phase 1', 450000, 'NGN', 'Lekki', 80, 48, 110, 'sqm', 2, 'Lease authority letter from owner', 'u3', 'approved', ['a2', 'a5'], 40, 'Chief Adebayo', 120, 'NG'),
+      L('n2', 'sale', '4-bed terrace in Ikoyi', 320000000, 'NGN', 'Ikoyi', 66, 44, 260, 'sqm', 4, "Governor's consent obtained", 'u2', 'approved', ['h3', 'h6'], 90, null, 210, 'NG'),
+      L('n3', 'land', '600 sqm plot in Ajah', 45000000, 'NGN', 'Ajah', 92, 54, 1, 'plots', 0, 'Certificate of Occupancy', 'u3', 'approved', ['l4'], 150, 'Mrs Okonkwo', 75, 'NG'),
+      L('g1', 'rent', '1-bed flat near Hackney Downs', 1850, 'GBP', 'Hackney', 66, 22, 520, 'sqft', 1, 'Assured shorthold tenancy', 'u2', 'approved', ['a3', 'a6'], 20, null, 310, 'GB'),
+      L('g2', 'sale', '3-bed Victorian terrace', 725000, 'GBP', 'Brixton', 52, 54, 1180, 'sqft', 3, 'Freehold (HM Land Registry)', 'u3', 'approved', ['h8', 'h4'], 60, 'Mr & Mrs Patel', 440, 'GB'),
+      L('g3', 'sale', '2-bed leasehold flat, Camden', 540000, 'GBP', 'Camden', 48, 20, 760, 'sqft', 2, 'Leasehold (112 yrs left)', 'u2', 'approved', ['a4', 'h1'], 100, null, 190, 'GB'),
+      L('u1', 'rent', '3-bed house in Kololo', 3200000, 'UGX', 'Kololo', 55, 22, 180, 'sqm', 3, 'Lease authority letter from owner', 'u3', 'approved', ['h5', 'a1'], 35, 'Mr Ssemakula', 88, 'UG')
     ],
     threads: [
       { id: 't1', listingId: 'l1', a: 'u1', b: 'u2', messages: [
@@ -346,10 +400,10 @@ function seed() {
       ] }
     ],
     txns: [
-      { id: 'ESC-20481', listingId: 'l1', buyer: 'u1', seller: 'u2', kind: 'rent', amount: 170000, price: 85000, currency: 'KES', method: 'M-Pesa', status: 'held', paidAt: now - 22 * H, viewingAt: now - 6 * H,
+      { id: 'ESC-20481', listingId: 'l1', buyer: 'u1', seller: 'u2', kind: 'rent', amount: 170000, price: 85000, currency: 'KES', method: 'M-Pesa', status: 'held', policy: COUNTRIES.KE.policy, paidAt: now - 22 * H, viewingAt: now - 6 * H,
         viewing: { buyer: true, seller: true }, handover: { buyer: false, seller: false },
         log: [[now - 22 * H, 'KES 170,000 received via M-Pesa (first month + 1 month deposit).'], [now - 22 * H, 'Joseph Mwangi notified.'], [now - 6 * H, 'Viewing confirmed by both sides.']] },
-      { id: 'ESC-19974', listingId: 'l9', buyer: 'u1', seller: 'u2', kind: 'rent', amount: 110000, price: 55000, currency: 'KES', method: 'M-Pesa', status: 'released', paidAt: now - 380 * D, viewingAt: now - 377 * D, releasedAt: now - 370 * D, agreement: 'AGR-31877',
+      { id: 'ESC-19974', listingId: 'l9', buyer: 'u1', seller: 'u2', kind: 'rent', amount: 110000, price: 55000, currency: 'KES', method: 'M-Pesa', status: 'released', policy: COUNTRIES.KE.policy, paidAt: now - 380 * D, viewingAt: now - 377 * D, releasedAt: now - 370 * D, agreement: 'AGR-31877',
         viewing: { buyer: true, seller: true }, handover: { buyer: true, seller: true },
         log: [[now - 380 * D, 'KES 110,000 received via M-Pesa (first month + 1 month deposit).'], [now - 377 * D, 'Viewing confirmed by both sides.'], [now - 370 * D, 'Handover confirmed by both sides.'], [now - 370 * D, 'KES 104,500 released to Joseph Mwangi; KES 5,500 commission retained.']] }
     ],
@@ -372,10 +426,11 @@ function seed() {
     ],
     notes: { u2: [{ t: now - 22 * H, text: 'Amina Odhiambo paid KES 170,000 into escrow for the Kilimani apartment.' }] },
     q: { text: '', place: 'all', min: '', max: '', beds: '0', sort: 'newest', saved: false },
+    country: 'KE', lang: 'en',
     rate: {}, selected: null, view: 'browse', filter: 'all', thread: 't1', adminTab: 'queue', drawer: false, draft: null
   };
-  function L(id, type, title, price, currency, place, x, y, size, unit, beds, titleStatus, ownerId, status, photos, ageH, clientOwner, views) {
-    return { id, type, title, price, currency, place, x, y, size, unit, beds, titleStatus, ownerId, status, photos, created: now - ageH * H, views: views || 0,
+  function L(id, type, title, price, currency, place, x, y, size, unit, beds, titleStatus, ownerId, status, photos, ageH, clientOwner, views, cc) {
+    return { id, type, title, price, currency, place, x, y, size, unit, beds, titleStatus, ownerId, status, photos, created: now - ageH * H, views: views || 0, country: cc || 'KE',
       proof: titleStatus === 'None provided' ? null : { file: (type === 'rent' ? 'lease-authority-' : 'title-') + id + '.pdf' }, clientOwner: clientOwner || null, adminChecks: {} };
   }
   function nextSaturday10() { const d = new Date(now); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); d.setHours(10, 0, 0, 0); return d.toISOString(); }
@@ -390,7 +445,7 @@ function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e
 /* ---------- Helpers ---------- */
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const money = (n, c) => `${c} ${Math.round(n).toLocaleString('en-US')}`;
+const money = (n, c) => { try { return new Intl.NumberFormat(C().locale, { style: 'currency', currency: c, maximumFractionDigits: 0 }).format(Math.round(n)); } catch (e) { return `${c} ${Math.round(n).toLocaleString('en-US')}`; } };
 const me = () => S.users[S.me];
 const user = id => S.users[id] || { id, name: 'Former member', role: 'buyer', verified: true };
 const listing = id => S.listings.find(l => l.id === id);
@@ -399,12 +454,13 @@ const ago = t => { const m = Math.round((Date.now() - t) / 60000); if (m < 1) re
 const fmtDate = t => new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 const fmtWhen = t => new Date(t).toLocaleString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 const fmtTs = t => new Date(t).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-const typeLabel = { sale: 'For sale', rent: 'For rent', land: 'Land' };
-const closedLabel = l => l.type === 'rent' ? 'Let' : 'Sold';
+const typeLabel = { get sale() { return T('For sale'); }, get rent() { return T('For rent'); }, get land() { return T('Land'); } };
+const closedLabel = l => T(l.type === 'rent' ? 'Let' : 'Sold');
 function toast(text, bad) { const el = document.createElement('div'); el.className = 'toast' + (bad ? ' bad' : ''); el.textContent = text; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3800); }
 function notify(uid, text) { (S.notes[uid] = S.notes[uid] || []).unshift({ t: Date.now(), text }); }
 function audit(action, target, by) { S.audit.unshift([Date.now(), by || me().name, action, target]); }
-function depositFor(l, price) { return l.type === 'rent' ? price * 2 : Math.round(price * 0.1); }
+function depositFor(l, price) { const p = (COUNTRIES[l.country] || C()).policy; return l.type === 'rent' ? price * (1 + p.rentDepositMonths) : Math.round(price * p.depositPct); }
+const depositLabel = l => l.type === 'rent' ? `First month + ${P().rentDepositMonths} month deposit` : `${P().depositPct * 100}% deposit`;
 function agreedPrice(l, buyerId) {
   const th = S.threads.find(t => t.listingId === l.id && t.a === buyerId);
   const acc = th && [...th.messages].reverse().find(m => m.offer && m.offer.status === 'accepted');
@@ -471,7 +527,7 @@ function mapSVG(opts = {}) {
       ${sel ? `<circle cx="${l.x}" cy="${l.y}" r="5" fill="none" stroke="var(--${l.type})" stroke-width=".5"/>` : ''}</g>`;
   }).join('');
   const draft = opts.draft ? `<g><circle cx="${opts.draft.x}" cy="${opts.draft.y}" r="2.6" fill="var(--accent)" stroke="var(--surface)" stroke-width=".8"/><circle cx="${opts.draft.x}" cy="${opts.draft.y}" r="5" fill="none" stroke="var(--accent)" stroke-width=".4" stroke-dasharray="1 1"/></g>` : '';
-  return `<svg class="map" viewBox="0 0 100 66" ${opts.pick ? 'data-act="pick" style="cursor:crosshair"' : ''} aria-label="Map of Nairobi area">
+  return `<svg class="map" viewBox="0 0 100 66" ${opts.pick ? 'data-act="pick" style="cursor:crosshair"' : ''} aria-label="Map of ${C().city}">
     <rect width="100" height="66" fill="var(--map-land)"/>
     <path d="M0 47 C18 44 30 48 44 45 S70 40 100 36" stroke="var(--map-water)" stroke-width="2.2" fill="none"/>
     <path d="M47 0 C49 18 53 26 52 34 S58 50 62 66" stroke="var(--map-road)" stroke-width="1.4" fill="none"/>
@@ -479,11 +535,11 @@ function mapSVG(opts = {}) {
     <path d="M52 34 L80 46 L92 66" stroke="var(--map-road)" stroke-width="1" fill="none"/>
     <path d="M52 34 L70 18 L100 6" stroke="var(--map-road)" stroke-width="1" fill="none"/>
     <path d="M10 66 C14 56 22 46 36 40" stroke="var(--map-road)" stroke-width=".8" fill="none"/>
-    ${PLACES.map(p => `<text x="${p.x}" y="${p.y + 5.5}" font-size="2.4" text-anchor="middle">${p.name}</text>`).join('')}
+    ${C().places.map(p => `<text x="${p.x}" y="${p.y + 5.5}" font-size="2.4" text-anchor="middle">${p.name}</text>`).join('')}
     <text x="97" y="63" font-size="2.2" text-anchor="end">N ↑  ·  1 unit ≈ 0.6 km</text>
     ${pins}${draft}</svg>`;
 }
-function nearestPlace(x, y) { return PLACES.reduce((b, p) => (Math.hypot(p.x - x, p.y - y) < Math.hypot(b.x - x, b.y - y) ? p : b)).name; }
+function nearestPlace(x, y) { return C().places.reduce((b, p) => (Math.hypot(p.x - x, p.y - y) < Math.hypot(b.x - x, b.y - y) ? p : b)).name; }
 
 /* ---------- Chrome ---------- */
 function renderChrome() {
@@ -491,19 +547,21 @@ function renderChrome() {
   const notes = S.notes[u.id] || [];
   const unread = notes.filter(n => !n.read).length;
   $('#who').innerHTML = `
-    <span class="label">Viewing as</span>
+    <select id="country" aria-label="${T('Country')}">${Object.entries(COUNTRIES).map(([k, c]) => `<option value="${k}" ${k === S.country ? 'selected' : ''}>${c.name} · ${c.currency}</option>`).join('')}</select>
+    <select id="lang" aria-label="${T('Language')}">${Object.entries(LANGS).map(([k, n]) => `<option value="${k}" ${k === S.lang ? 'selected' : ''}>${n}</option>`).join('')}</select>
+    <span class="label">${T('Viewing as')}</span>
     <select id="as" aria-label="Switch demo account">${Object.values(S.users).map(x => `<option value="${x.id}" ${x.id === u.id ? 'selected' : ''}>${esc(x.name)} · ${ROLES[x.role].label}</option>`).join('')}</select>
-    ${u.verified ? '<span class="pill ok">✓ ID & phone verified</span>' : '<button class="pill warn" data-act="verify" style="border:0;cursor:pointer">Unverified · verify now</button>'}
+    ${u.verified ? `<span class="pill ok">✓ ${T('ID & phone verified')}</span>` : `<button class="pill warn" data-act="verify" style="border:0;cursor:pointer">${T('Unverified · verify now')}</button>`}
     ${u.suspended ? '<span class="pill bad">Suspended</span>' : ''}
-    <span style="position:relative"><button class="bell" data-act="drawer" aria-label="Notifications">Alerts ${unread ? `<i>${unread}</i>` : ''}</button>
+    <span style="position:relative"><button class="bell" data-act="drawer" aria-label="Notifications">${T('Alerts')} ${unread ? `<i>${unread}</i>` : ''}</button>
     ${S.drawer ? `<div class="drawer">${notes.length ? notes.slice(0, 8).map(n => `<div>${esc(n.text)}<br><span class="muted small">${ago(n.t)}</span></div>`).join('') : '<span class="muted small">No alerts yet.</span>'}</div>` : ''}</span>
-    <button class="btn ghost small" data-act="reset">Reset demo</button>`;
-  const tabs = [['browse', 'Browse']];
-  if (u.role === 'seller' || u.role === 'agent') tabs.push(['sell', 'My listings', S.listings.filter(l => l.ownerId === u.id).length]);
-  if (u.role !== 'admin') tabs.push(['messages', 'Messages', S.threads.filter(t => t.a === u.id || t.b === u.id).length]);
-  tabs.push(['escrow', 'Escrow', myTxns().length]);
-  if (u.role === 'admin') tabs.push(['admin', 'Moderation', S.listings.filter(l => l.status === 'pending').length + S.reports.filter(r => r.status === 'open').length + S.txns.filter(t => t.status === 'disputed').length]);
-  tabs.push(['blueprint', 'Blueprint']);
+    <button class="btn ghost small" data-act="reset">${T('Reset demo')}</button>`;
+  const tabs = [['browse', T('Browse')]];
+  if (u.role === 'seller' || u.role === 'agent') tabs.push(['sell', T('My listings'), S.listings.filter(l => l.ownerId === u.id).length]);
+  if (u.role !== 'admin') tabs.push(['messages', T('Messages'), S.threads.filter(t => t.a === u.id || t.b === u.id).length]);
+  tabs.push(['escrow', T('Escrow'), myTxns().length]);
+  if (u.role === 'admin') tabs.push(['admin', T('Moderation'), S.listings.filter(l => l.status === 'pending').length + S.reports.filter(r => r.status === 'open').length + S.txns.filter(t => t.status === 'disputed').length]);
+  tabs.push(['blueprint', T('Blueprint')]);
   if (!tabs.some(t => t[0] === S.view) && S.view !== 'listing') S.view = 'browse';
   $('#tabs').innerHTML = tabs.map(([k, n, c]) => `<button class="tab" data-act="go" data-view="${k}" ${S.view === k || (S.view === 'listing' && k === 'browse') ? 'aria-current="page"' : ''}>${n}${c ? `<span class="ct">${c}</span>` : ''}</button>`).join('');
 }
@@ -512,7 +570,7 @@ function myTxns() { const u = me(); return u.role === 'admin' ? S.txns : S.txns.
 /* ---------- Browse ---------- */
 function searchResults() {
   const q = S.q, text = q.text.trim().toLowerCase();
-  let out = S.listings.filter(l => l.status === 'approved');
+  let out = S.listings.filter(l => l.status === 'approved' && l.country === S.country);
   if (S.filter !== 'all') out = out.filter(l => l.type === S.filter);
   if (q.saved) out = out.filter(l => isSaved(l.id));
   if (text) out = out.filter(l => (l.title + ' ' + l.place + ' ' + l.titleStatus).toLowerCase().includes(text));
@@ -524,19 +582,19 @@ function searchResults() {
   return out.sort(sorters[q.sort] || sorters.newest);
 }
 function vBrowse() {
-  const live = S.listings.filter(l => l.status === 'approved');
-  const q = S.q;
-  return `<div class="page-head"><div><h2>Homes and land around Nairobi</h2><p class="muted">${live.length} approved listings · every owner ID-verified · deposits held in escrow</p></div></div>
+  const live = S.listings.filter(l => l.status === 'approved' && l.country === S.country);
+  const q = S.q, c = C();
+  return `<div class="page-head"><div><h2>${T('Homes and land in {city}', { city: c.city })}</h2><p class="muted">${live.length} ${T('approved listings')} · ${T('every owner ID-verified')} · ${T('deposits held in escrow')}</p></div></div>
   <div class="search">
-    <input class="q" id="q-text" type="search" placeholder="Search title, area or title status" value="${esc(q.text)}" aria-label="Search">
-    <select id="q-place" aria-label="Area"><option value="all">All areas</option>${PLACES.map(p => `<option ${q.place === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}</select>
-    <input id="q-min" type="number" min="0" step="1000" placeholder="Min KES" value="${esc(q.min)}" aria-label="Minimum price">
-    <input id="q-max" type="number" min="0" step="1000" placeholder="Max KES" value="${esc(q.max)}" aria-label="Maximum price">
-    <select id="q-sort" aria-label="Sort"><option value="newest" ${q.sort === 'newest' ? 'selected' : ''}>Newest first</option><option value="price-asc" ${q.sort === 'price-asc' ? 'selected' : ''}>Price: low to high</option><option value="price-desc" ${q.sort === 'price-desc' ? 'selected' : ''}>Price: high to low</option><option value="popular" ${q.sort === 'popular' ? 'selected' : ''}>Most viewed</option></select>
+    <input class="q" id="q-text" type="search" placeholder="${T('Search title, area or title status')}" value="${esc(q.text)}" aria-label="Search">
+    <select id="q-place" aria-label="Area"><option value="all">${T('All areas')}</option>${c.places.map(p => `<option ${q.place === p.name ? 'selected' : ''}>${p.name}</option>`).join('')}</select>
+    <input id="q-min" type="number" min="0" step="1000" placeholder="Min ${c.currency}" value="${esc(q.min)}" aria-label="Minimum price">
+    <input id="q-max" type="number" min="0" step="1000" placeholder="Max ${c.currency}" value="${esc(q.max)}" aria-label="Maximum price">
+    <select id="q-sort" aria-label="Sort"><option value="newest" ${q.sort === 'newest' ? 'selected' : ''}>${T('Newest first')}</option><option value="price-asc" ${q.sort === 'price-asc' ? 'selected' : ''}>${T('Price: low to high')}</option><option value="price-desc" ${q.sort === 'price-desc' ? 'selected' : ''}>${T('Price: high to low')}</option><option value="popular" ${q.sort === 'popular' ? 'selected' : ''}>${T('Most viewed')}</option></select>
   </div>
-  <div class="filters" role="group" aria-label="Listing type">${['all', 'sale', 'rent', 'land'].map(f => `<button class="chip" data-act="filter" data-f="${f}" aria-pressed="${S.filter === f}">${f === 'all' ? 'All' : typeLabel[f]}</button>`).join('')}
-    <select id="q-beds" aria-label="Bedrooms" class="chip" style="padding:4px 10px">${['0', '1', '2', '3', '4'].map(b => `<option value="${b}" ${q.beds === b ? 'selected' : ''}>${b === '0' ? 'Any bedrooms' : b + '+ bed'}</option>`).join('')}</select>
-    ${me().role !== 'admin' ? `<button class="chip" data-act="savedonly" aria-pressed="${q.saved}">♥ Saved (${(S.saved[S.me] || []).length})</button>` : ''}
+  <div class="filters" role="group" aria-label="Listing type">${['all', 'sale', 'rent', 'land'].map(f => `<button class="chip" data-act="filter" data-f="${f}" aria-pressed="${S.filter === f}">${f === 'all' ? T('All') : typeLabel[f]}</button>`).join('')}
+    <select id="q-beds" aria-label="Bedrooms" class="chip" style="padding:4px 10px">${['0', '1', '2', '3', '4'].map(b => `<option value="${b}" ${q.beds === b ? 'selected' : ''}>${b === '0' ? T('Any bedrooms') : b + '+ ' + T('bed')}</option>`).join('')}</select>
+    ${me().role !== 'admin' ? `<button class="chip" data-act="savedonly" aria-pressed="${q.saved}">♥ ${T('Saved')} (${(S.saved[S.me] || []).length})</button>` : ''}
   </div>
   <div class="browse">
     <div class="mapbox" id="mapbox">${browseMap()}</div>
@@ -546,7 +604,7 @@ function vBrowse() {
 function browseMap() { return `${mapSVG({ listings: searchResults() })}<div class="legend"><span style="color:var(--sale)">Sale</span><span style="color:var(--rent)">Rent</span><span style="color:var(--land)">Land</span><span class="muted">Tap a pin to highlight a listing</span></div>`; }
 function browseLedger() {
   const r = searchResults();
-  return `<div class="small muted">${r.length} result${r.length === 1 ? '' : 's'}</div>` + (r.map(card).join('') || '<div class="empty">Nothing matches these filters. Try widening the price range or clearing the search.</div>');
+  return `<div class="small muted">${r.length} ${T(r.length === 1 ? 'result' : 'results')}</div>` + (r.map(card).join('') || '<div class="empty">Nothing matches these filters. Try widening the price range or clearing the search.</div>');
 }
 function card(l) {
   const o = user(l.ownerId), rt = ratingOf(o.id);
@@ -555,9 +613,9 @@ function card(l) {
     <div class="lmeta">
       <div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span><span class="small muted">${esc(l.place)}</span>${me().role !== 'admin' ? `<button class="heart" style="margin-left:auto" data-act="save" data-id="${l.id}" aria-pressed="${isSaved(l.id)}" aria-label="Save listing">♥</button>` : ''}</div>
       <h3>${esc(l.title)}</h3>
-      <div class="price">${money(l.price, l.currency)}${l.type === 'rent' ? ' <small>/ month</small>' : ''}</div>
-      <div class="facts"><span>${l.size} ${l.unit}</span>${l.beds ? `<span>${l.beds} bed</span>` : ''}<span>${esc(l.titleStatus)}</span></div>
-      <div class="small muted">${esc(o.name)} · ${ROLES[o.role].label} ${o.verified ? '<span class="pill ok">verified</span>' : ''}${rt.n ? ` <span class="star">★</span> ${rt.avg.toFixed(1)}` : ''}</div>
+      <div class="price">${money(l.price, l.currency)}${l.type === 'rent' ? ` <small>${T('/ month')}</small>` : ''}</div>
+      <div class="facts"><span>${l.size} ${l.unit}</span>${l.beds ? `<span>${l.beds} ${T('bed')}</span>` : ''}<span>${esc(l.titleStatus)}</span></div>
+      <div class="small muted">${esc(o.name)} · ${ROLES[o.role].label} ${o.verified ? `<span class="pill ok">${T('verified')}</span>` : ''}${rt.n ? ` <span class="star">★</span> ${rt.avg.toFixed(1)}` : ''}</div>
     </div></div>`;
 }
 
@@ -579,42 +637,43 @@ function vListing() {
     <div class="row">${ownerActions(l)}</div>`;
   else if (l.status !== 'approved') actions = `<div class="notice">This listing is no longer available${l.status === 'closed' ? ` (${closedLabel(l).toLowerCase()})` : ''}.</div>`;
   else actions = `
-    <div class="row"><button class="btn" data-act="message" data-id="${l.id}">Message ${esc(o.name.split(' ')[0])}</button><button class="btn" data-act="save" data-id="${l.id}">${isSaved(l.id) ? '♥ Saved' : '♡ Save'}</button><button class="btn ghost" data-act="copylink" data-id="${l.id}">Copy link</button></div>
+    <div class="row"><button class="btn" data-act="message" data-id="${l.id}">${T('Message')} · ${esc(o.name.split(' ')[0])}</button><button class="btn" data-act="save" data-id="${l.id}">${isSaved(l.id) ? '♥ ' + T('Saved') : '♡ ' + T('Save')}</button><button class="btn ghost" data-act="copylink" data-id="${l.id}">${T('Copy link')}</button></div>
     <form class="row" data-form="offer" data-id="${l.id}">
-      <label class="field" style="flex:1;min-width:140px"><span>Your offer (${l.currency}${l.type === 'rent' ? ' / month' : ''})</span><input id="offer-amt" name="amt" type="number" min="1" step="1000" value="${Math.round(l.price * 0.95)}"></label>
-      <button class="btn" style="align-self:end">Send offer</button></form>
-    <div class="notice escrow"><b>${l.type === 'rent' ? 'First month + 1 month deposit' : '10% deposit'}:</b> <span class="mono">${money(dep, l.currency)}</span>${price !== l.price ? ` <span class="small">(based on accepted offer of ${money(price, l.currency)})</span>` : ''}<br><span class="small">Held by Noble until you confirm the viewing and handover. Refunded automatically if no viewing is confirmed within ${VIEWING_DAYS} days.</span></div>
-    ${open ? `<button class="btn" data-act="go" data-view="escrow">View escrow ${open.id}</button>` : `<button class="btn escrow" data-act="pay" data-id="${l.id}">Pay into escrow</button>`}
-    <button class="btn ghost danger small" data-act="report" data-id="${l.id}">Report this listing</button>`;
-  return `<div class="row" style="margin-bottom:12px"><button class="btn ghost" data-act="go" data-view="browse">← All listings</button></div>
+      <label class="field" style="flex:1;min-width:140px"><span>${T('Your offer')} (${l.currency}${l.type === 'rent' ? ' ' + T('/ month') : ''})</span><input id="offer-amt" name="amt" type="number" min="1" step="${l.price > 10000 ? 1000 : 10}" value="${Math.round(l.price * 0.95)}"></label>
+      <button class="btn" style="align-self:end">${T('Send offer')}</button></form>
+    <div class="notice escrow"><b>${depositLabel(l)}:</b> <span class="mono">${money(dep, l.currency)}</span>${price !== l.price ? ` <span class="small">(based on accepted offer of ${money(price, l.currency)})</span>` : ''}<br><span class="small">Held by Noble until you confirm the viewing and handover. Refunded automatically if no viewing is confirmed within ${P().viewingDays} days.</span></div>
+    ${open ? `<button class="btn" data-act="go" data-view="escrow">${T('Escrow')} ${open.id}</button>` : `<button class="btn escrow" data-act="pay" data-id="${l.id}">${T('Pay into escrow')}</button>`}
+    <button class="btn ghost danger small" data-act="report" data-id="${l.id}">${T('Report this listing')}</button>`;
+  const cc = COUNTRIES[l.country] || C(), ctr = CENTERS[l.country] || CENTERS.KE;
+  return `<div class="row" style="margin-bottom:12px"><button class="btn ghost" data-act="go" data-view="browse">← ${T('All listings')}</button></div>
   <div class="detail">
     <div class="stack">
       <div class="gallery">${photo(l.photos[idx] || l.photos[0])}</div>
       <div class="thumbs">${l.photos.map((p, i) => `<button data-act="ph" data-i="${i}" aria-current="${i === idx}" aria-label="Photo ${i + 1}">${photo(p)}</button>`).join('')}</div>
       <div class="panel stack">
-        <div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span>${l.status !== 'approved' ? statusPill(l) : ''}<span class="mono small muted">REF ${l.id.toUpperCase()}-${(hash(l.id) % 9000 + 1000)}</span><span class="small muted" style="margin-left:auto">${st.views} views</span></div>
+        <div class="row"><span class="pill t-${l.type}">${typeLabel[l.type]}</span>${l.status !== 'approved' ? statusPill(l) : ''}<span class="mono small muted">REF ${l.id.toUpperCase()}-${(hash(l.id) % 9000 + 1000)}</span><span class="small muted" style="margin-left:auto">${st.views} ${T('views')}</span></div>
         <h2>${esc(l.title)}</h2>
-        <div class="price" style="font-size:1.4rem">${money(l.price, l.currency)}${l.type === 'rent' ? ' <small>/ month</small>' : ''}</div>
+        <div class="price" style="font-size:1.4rem">${money(l.price, l.currency)}${l.type === 'rent' ? ` <small>${T('/ month')}</small>` : ''}</div>
         <dl class="kv">
-          <dt>Location</dt><dd>${esc(l.place)}, Nairobi · pin <span class="mono small">${(-1.2 - l.y / 300).toFixed(4)}, ${(36.7 + l.x / 400).toFixed(4)}</span></dd>
-          <dt>Size</dt><dd>${l.size} ${l.unit}${l.beds ? ` · ${l.beds} bedroom${l.beds > 1 ? 's' : ''}` : ''}</dd>
-          <dt>Title status</dt><dd>${esc(l.titleStatus)}</dd>
-          <dt>Ownership proof</dt><dd>${l.proof ? `<span class="pill ok">✓ Checked by Noble</span> <span class="small muted mono">${esc(l.proof.file)}</span>` : '<span class="pill bad">Missing</span>'}</dd>
-          <dt>Listed</dt><dd>${ago(l.created)}</dd>
+          <dt>${T('Location')}</dt><dd>${esc(l.place)}, ${cc.city} · pin <span class="mono small">${(ctr[0] + (33 - l.y) / 300).toFixed(4)}, ${(ctr[1] + (l.x - 50) / 400).toFixed(4)}</span></dd>
+          <dt>${T('Size')}</dt><dd>${l.size} ${l.unit}${l.beds ? ` · ${l.beds} ${T('bed')}` : ''}</dd>
+          <dt>${T('Title status')}</dt><dd>${esc(l.titleStatus)}</dd>
+          <dt>${T('Ownership proof')}</dt><dd>${l.proof ? `<span class="pill ok">✓ ${T('Checked by Noble')}</span> <span class="small muted mono">${esc(l.proof.file)}</span>` : `<span class="pill bad">${T('Missing')}</span>`}</dd>
+          <dt>${T('Listed')}</dt><dd>${ago(l.created)}</dd>
         </dl>
       </div>
     </div>
     <div class="stack">
       <div class="panel stack">
-        <div class="label">Listed by</div>
-        <div class="owner"><div class="avatar">${initials(o.name)}</div><div><b>${esc(o.name)}</b><div class="small muted">${ROLES[o.role].label}${o.license ? ` · licence <span class="mono">${o.license}</span>` : ''}</div></div></div>
+        <div class="label">${T('Listed by')}</div>
+        <div class="owner"><div class="avatar">${initials(o.name)}</div><div><b>${esc(o.name)}</b><div class="small muted">${ROLES[o.role].label}${o.license ? ` · ${cc.agentReg} <span class="mono">${o.license}</span>` : ''}</div></div></div>
         <div class="small">${trustLine(o)}</div>
         <div class="row">${o.verified ? '<span class="pill ok">✓ National ID</span><span class="pill ok">✓ Phone</span>' : '<span class="pill warn">Not verified</span>'}</div>
         ${l.clientOwner ? `<p class="small muted">Listing on behalf of registered owner <b>${esc(l.clientOwner)}</b>.</p>` : ''}
       </div>
       <div class="panel stack">${actions}</div>
       <div class="panel" style="padding:10px">${mapSVG({ listings: [l] })}</div>
-      ${l.type !== 'rent' ? '<p class="small muted">Full sale and land transfers complete offline at the Lands Registry. Noble escrows the deposit and records the signed agreement.</p>' : ''}
+      ${l.type !== 'rent' ? `<p class="small muted">Full sale and land transfers complete offline at ${cc.registry}. Noble escrows the deposit and records the signed agreement.</p>` : ''}
     </div>
   </div>`;
 }
@@ -624,7 +683,7 @@ function ownerActions(l) {
   if (l.status === 'closed' || l.status === 'rejected' || l.status === 'removed') return `<button class="btn ghost" data-act="relist" data-id="${l.id}">Relist (goes back through review)</button>`;
   return '';
 }
-function statusPill(l) { return { approved: '<span class="pill ok">Live</span>', pending: '<span class="pill warn">Pending review</span>', rejected: '<span class="pill bad">Rejected</span>', removed: '<span class="pill bad">Taken down</span>', paused: '<span class="pill">Paused</span>', closed: `<span class="pill info">${closedLabel(l)}</span>` }[l.status]; }
+function statusPill(l) { return { approved: `<span class="pill ok">${T('Live')}</span>`, pending: `<span class="pill warn">${T('Pending review')}</span>`, rejected: `<span class="pill bad">${T('Rejected')}</span>`, removed: `<span class="pill bad">${T('Taken down')}</span>`, paused: `<span class="pill">${T('Paused')}</span>`, closed: `<span class="pill info">${closedLabel(l)}</span>` }[l.status]; }
 
 /* ---------- Sell ---------- */
 function vSell() {
@@ -634,19 +693,19 @@ function vSell() {
   const recent = (S.rate[u.id] || []).filter(t => Date.now() - t < 24 * H).length;
   const dups = duplicatesOf(d.photos);
   const needsProof = d.type !== 'rent';
-  return `<div class="page-head"><div><h2>My listings</h2><p class="muted">New listings wait in a review queue until an admin approves them.</p></div></div>
+  return `<div class="page-head"><div><h2>${T('My listings')}</h2><p class="muted">New listings wait in a review queue until an admin approves them. Listing in ${C().name} (${C().currency}); switch country at the top to list elsewhere.</p></div></div>
   <div class="detail">
     <form class="panel stack" data-form="listing">
-      <h3>New listing</h3>
+      <h3>${T('New listing')}</h3>
       ${!u.verified ? '<div class="notice warn">Verify your ID and phone before you can submit a listing.</div>' : ''}
       ${recent >= LISTING_LIMIT ? `<div class="notice bad">You have submitted ${recent} listings in 24 hours, the limit for one account. Try again tomorrow.</div>` : `<div class="small muted">${LISTING_LIMIT - recent} of ${LISTING_LIMIT} submissions left today.</div>`}
       <div class="grid2">
         <label class="field"><span>Type</span><select id="f-type" name="type">${['sale', 'rent', 'land'].map(t => `<option value="${t}" ${d.type === t ? 'selected' : ''}>${typeLabel[t]}</option>`).join('')}</select></label>
         <label class="field"><span>Title</span><input id="f-title" name="title" required maxlength="70" placeholder="e.g. 3-bed bungalow with parking" value="${esc(d.title || '')}"></label>
         <label class="field"><span>Price${d.type === 'rent' ? ' per month' : ''}</span><input id="f-price" name="price" type="number" min="1" required value="${esc(d.price || '')}"></label>
-        <label class="field"><span>Currency</span><select id="f-cur" name="currency">${['KES', 'UGX', 'TZS', 'USD'].map(c => `<option ${d.currency === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
-        <label class="field"><span>Size</span><input id="f-size" name="size" type="number" min="0" step="any" required value="${esc(d.size || '')}"></label>
-        <label class="field"><span>Unit</span><select id="f-unit" name="unit">${['sqm', 'acres'].map(c => `<option ${d.unit === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label class="field"><span>Currency</span><select id="f-cur" name="currency">${[...new Set([C().currency, 'USD'])].map(c => `<option ${d.currency === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label class="field"><span>${T('Size')}</span><input id="f-size" name="size" type="number" min="0" step="any" required value="${esc(d.size || '')}"></label>
+        <label class="field"><span>Unit</span><select id="f-unit" name="unit">${[C().unit, C().landUnit].map(c => `<option ${d.unit === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
         ${d.type !== 'land' ? `<label class="field"><span>Bedrooms</span><input id="f-beds" name="beds" type="number" min="0" value="${esc(d.beds ?? '')}"></label>` : ''}
         <label class="field"><span>Title / ownership status</span><select id="f-ts" name="titleStatus">${['Freehold title deed', 'Leasehold title', 'Lease authority letter from owner', 'Title in process (allotment letter)'].map(c => `<option ${d.titleStatus === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
       </div>
@@ -659,7 +718,7 @@ function vSell() {
       </div>
       <label class="field"><span>Proof of ownership ${needsProof ? '<span class="pill bad">required</span>' : '<span class="pill">recommended</span>'}</span>
         <input id="f-proof" name="proof" type="file" accept=".pdf,image/*">${d.proofName ? `<span class="pill ok">Attached: ${esc(d.proofName)}</span>` : ''}<span class="hint">${needsProof ? 'Upload the title deed or official search. Admins check it against the registry before approval.' : 'A lease authority letter from the owner speeds up approval.'}</span></label>
-      <div class="row"><button class="btn primary" ${recent >= LISTING_LIMIT ? 'disabled' : ''}>Submit for review</button><span class="small muted">Goes live after admin approval.</span></div>
+      <div class="row"><button class="btn primary" ${recent >= LISTING_LIMIT ? 'disabled' : ''}>${T('Submit for review')}</button><span class="small muted">Goes live after admin approval.</span></div>
     </form>
     <div class="stack">
       <h3>Submitted</h3>
@@ -688,30 +747,30 @@ function vMessages() {
       const canAnswer = !mineMsg && m.offer.status === 'pending';
       return `<div class="msg offer ${mineMsg ? 'me' : ''}"><div class="label">Offer${l.type === 'rent' ? ' / month' : ''}</div><div class="price">${money(m.offer.amount, l.currency)}</div>
         <div class="row small">${{ pending: '<span class="pill warn">Awaiting reply</span>', accepted: '<span class="pill ok">Accepted</span>', declined: '<span class="pill">Declined</span>' }[m.offer.status]}
-        ${canAnswer ? `<button class="btn small" data-act="offerans" data-i="${i}" data-ans="accepted">Accept</button><button class="btn ghost small" data-act="offerans" data-i="${i}" data-ans="declined">Decline</button>` : ''}</div>${who}</div>`;
+        ${canAnswer ? `<button class="btn small" data-act="offerans" data-i="${i}" data-ans="accepted">${T('Accept')}</button><button class="btn ghost small" data-act="offerans" data-i="${i}" data-ans="declined">${T('Decline')}</button>` : ''}</div>${who}</div>`;
     }
     if (m.viewing) {
       const canAnswer = !mineMsg && m.viewing.status === 'pending';
       const past = new Date(m.viewing.when) < new Date();
       return `<div class="msg viewing ${mineMsg ? 'me' : ''}"><div class="label">Viewing proposed</div><div><b>${fmtWhen(m.viewing.when)}</b></div>
         <div class="row small">${{ pending: '<span class="pill warn">Awaiting reply</span>', accepted: `<span class="pill ok">Agreed${past ? ' · happened?' : ''}</span>`, declined: '<span class="pill">Declined</span>' }[m.viewing.status]}
-        ${canAnswer ? `<button class="btn small" data-act="viewans" data-i="${i}" data-ans="accepted">Accept</button><button class="btn ghost small" data-act="viewans" data-i="${i}" data-ans="declined">Suggest another time</button>` : ''}
+        ${canAnswer ? `<button class="btn small" data-act="viewans" data-i="${i}" data-ans="accepted">${T('Accept')}</button><button class="btn ghost small" data-act="viewans" data-i="${i}" data-ans="declined">${T('Decline')}</button>` : ''}
         ${m.viewing.status === 'accepted' && past ? `<button class="btn ghost small" data-act="go" data-view="escrow">Confirm in Escrow</button>` : ''}</div>${who}</div>`;
     }
     return `<div class="msg ${mineMsg ? 'me' : ''}">${esc(m.text)}${who}</div>`;
   }).join('');
   const minWhen = new Date(Date.now() + H).toISOString().slice(0, 16);
-  return `<div class="page-head"><div><h2>Messages</h2><p class="muted">Phone numbers and emails are hidden in chat. Keep payments in-app so escrow protects you.</p></div></div>
+  return `<div class="page-head"><div><h2>${T('Messages')}</h2><p class="muted">Phone numbers and emails are hidden in chat. Keep payments in-app so escrow protects you.</p></div></div>
   <div class="chat">
     <div class="threads">${ths.map(t => { const tl = listing(t.listingId), ou = user(t.a === u.id ? t.b : t.a), last = t.messages[t.messages.length - 1];
       return `<button class="thread" data-act="thread" data-id="${t.id}" aria-current="${t.id === th.id}"><b>${esc(ou.name)}</b><div class="small muted">${esc(tl.title)}</div><div class="small muted">${ago(last.t)}</div></button>`; }).join('')}</div>
     <section class="convo">
-      <header class="row" style="justify-content:space-between"><div><b>${esc(other.name)}</b> <span class="small muted">· ${esc(l.title)}</span></div><button class="btn ghost small" data-act="open" data-id="${l.id}">Open listing</button></header>
+      <header class="row" style="justify-content:space-between"><div><b>${esc(other.name)}</b> <span class="small muted">· ${esc(l.title)}</span></div><button class="btn ghost small" data-act="open" data-id="${l.id}">${T('Open listing')}</button></header>
       <div class="msgs" id="msgs">${bubbles}</div>
       <div class="composer">
-        <form data-form="msg"><input id="msg-text" name="text" autocomplete="off" placeholder="Write a message"><button class="btn primary">Send</button></form>
-        <form data-form="offer" data-id="${l.id}"><input id="msg-offer" name="amt" type="number" min="1" step="1000" placeholder="Offer amount (${l.currency})"><button class="btn">Send offer</button></form>
-        <form data-form="viewing"><input id="msg-when" name="when" type="datetime-local" min="${minWhen}" aria-label="Viewing date and time"><button class="btn">Propose viewing</button></form>
+        <form data-form="msg"><input id="msg-text" name="text" autocomplete="off" placeholder="${T('Write a message')}"><button class="btn primary">${T('Send')}</button></form>
+        <form data-form="offer" data-id="${l.id}"><input id="msg-offer" name="amt" type="number" min="1" step="${l.price > 10000 ? 1000 : 10}" placeholder="${T('Your offer')} (${l.currency})"><button class="btn">${T('Send offer')}</button></form>
+        <form data-form="viewing"><input id="msg-when" name="when" type="datetime-local" min="${minWhen}" aria-label="Viewing date and time"><button class="btn">${T('Propose viewing')}</button></form>
       </div>
     </section>
   </div>`;
@@ -720,28 +779,28 @@ function vMessages() {
 /* ---------- Escrow ---------- */
 function vEscrow() {
   const u = me(), list = myTxns();
-  return `<div class="page-head"><div><h2>Escrow</h2><p class="muted">Money is held by Noble until both sides confirm the viewing and the handover. Commission is ${COMMISSION * 100}% on release. Unconfirmed deals refund automatically after ${VIEWING_DAYS} days (viewing) or ${HANDOVER_DAYS} days (handover).</p></div></div>
+  return `<div class="page-head"><div><h2>${T('Escrow')}</h2><p class="muted">Money is held by Noble until both sides confirm the viewing and the handover. Commission in ${C().name} is ${P().commission * 100}% on release. Unconfirmed deals refund automatically after ${P().viewingDays} days (viewing) or ${P().handoverDays} days (handover).</p></div></div>
   <div class="stack">${list.map(t => txnCard(t, u)).join('') || '<div class="empty">No escrow payments yet. Open a listing and choose “Pay into escrow”.</div>'}</div>`;
 }
 function txnCard(t, u) {
   const l = listing(t.listingId), b = user(t.buyer), s = user(t.seller);
   const isB = u.id === t.buyer, isS = u.id === t.seller;
-  const fee = t.amount * COMMISSION;
+  const pol = polOf(t), fee = t.amount * pol.commission;
   const v = t.viewing.buyer && t.viewing.seller, h = t.handover.buyer && t.handover.seller;
-  const steps = [['Paid into escrow', true], ['Seller notified', true], ['Viewing confirmed', v], ['Handover confirmed', h],
-    [t.status === 'refunded' ? 'Refunded to buyer' : 'Released to seller', t.status === 'released' || t.status === 'refunded']];
-  const pill = { held: '<span class="pill escrow">Held in escrow</span>', disputed: '<span class="pill warn">Refund requested</span>', released: '<span class="pill ok">Released</span>', refunded: '<span class="pill bad">Refunded</span>' }[t.status];
+  const steps = [[T('Paid into escrow'), true], [T('Seller notified'), true], [T('Viewing confirmed'), v], [T('Handover confirmed'), h],
+    [t.status === 'refunded' ? T('Refunded to buyer') : T('Released to seller'), t.status === 'released' || t.status === 'refunded']];
+  const pill = { held: `<span class="pill escrow">${T('Held in escrow')}</span>`, disputed: `<span class="pill warn">${T('Refund requested')}</span>`, released: `<span class="pill ok">${T('Released')}</span>`, refunded: `<span class="pill bad">${T('Refunded')}</span>` }[t.status];
   const conf = (stage, side, who) => {
     const on = t[stage][side], can = t.status === 'held' && !on && ((side === 'buyer' && isB) || (side === 'seller' && isS)) && (stage === 'viewing' || v);
-    return `<div class="confirm ${on ? 'on' : ''}"><span class="dot"></span><span style="flex:1">${who} ${stage === 'viewing' ? 'confirms viewing' : 'confirms handover'}</span>${can ? `<button class="btn small" data-act="confirm" data-id="${t.id}" data-stage="${stage}" data-side="${side}">Confirm</button>` : on ? '<span class="small yes">done</span>' : ''}</div>`;
+    return `<div class="confirm ${on ? 'on' : ''}"><span class="dot"></span><span style="flex:1">${who} ${stage === 'viewing' ? T('confirms viewing') : T('confirms handover')}</span>${can ? `<button class="btn small" data-act="confirm" data-id="${t.id}" data-stage="${stage}" data-side="${side}">${T('Confirm')}</button>` : on ? `<span class="small yes">${T('done')}</span>` : ''}</div>`;
   };
   let deadline = '';
-  if (t.status === 'held') deadline = v ? `Auto-refund to ${esc(b.name.split(' ')[0])} on <b>${fmtDate(t.viewingAt + HANDOVER_DAYS * D)}</b> unless both sides confirm the handover.` : `Auto-refund to ${esc(b.name.split(' ')[0])} on <b>${fmtDate(t.paidAt + VIEWING_DAYS * D)}</b> unless both sides confirm the viewing.`;
+  if (t.status === 'held') deadline = v ? `Auto-refund to ${esc(b.name.split(' ')[0])} on <b>${fmtDate(t.viewingAt + pol.handoverDays * D)}</b> unless both sides confirm the handover.` : `Auto-refund to ${esc(b.name.split(' ')[0])} on <b>${fmtDate(t.paidAt + pol.viewingDays * D)}</b> unless both sides confirm the viewing.`;
   let acts = '';
   if (t.status === 'held' && (isB || isS)) acts += `<button class="btn ghost danger" data-act="refundreq" data-id="${t.id}">${isB ? 'Deal fell through · request refund' : 'Cancel deal · refund buyer'}</button>`;
   if (t.status === 'disputed' && isS && t.disputeBy === 'buyer') acts += `<button class="btn" data-act="resolve" data-id="${t.id}" data-out="refunded">Agree to refund</button>`;
   if (t.status === 'disputed' && u.role === 'admin') acts += `<button class="btn" data-act="resolve" data-id="${t.id}" data-out="refunded">Refund buyer</button><button class="btn escrow" data-act="resolve" data-id="${t.id}" data-out="released">Release to seller</button>`;
-  if (t.status === 'released') acts += `<button class="btn" data-act="record" data-id="${t.id}">View deal record</button>`;
+  if (t.status === 'released') acts += `<button class="btn" data-act="record" data-id="${t.id}">${T('View deal record')}</button>`;
   let rating = '';
   if (t.status === 'released' && (isB || isS)) {
     const other = isB ? s : b, mine = S.ratings.find(r => r.txnId === t.id && r.from === u.id);
@@ -751,17 +810,17 @@ function txnCard(t, u) {
   return `<article class="panel stack">
     <div class="row" style="justify-content:space-between"><div><span class="mono small muted">${t.id}</span><h3>${esc(l.title)}</h3><div class="small muted">${esc(b.name)} → ${esc(s.name)} · ${t.method} · ${t.kind === 'rent' ? 'rent + deposit' : '10% deposit'} · paid ${fmtDate(t.paidAt)}</div></div>${pill}</div>
     <ol class="steps">${steps.map(([n, d], i) => `<li class="${d ? (i === 4 && t.status === 'refunded' ? 'done fail' : 'done') : ''}">${n}</li>`).join('')}</ol>
-    <div class="split"><div><span class="label">Held</span><b>${money(t.amount, t.currency)}</b></div><div><span class="label">Noble commission ${COMMISSION * 100}%</span><b>${money(fee, t.currency)}</b></div><div><span class="label">Seller receives</span><b>${money(t.amount - fee, t.currency)}</b></div></div>
+    <div class="split"><div><span class="label">${T('Held')}</span><b>${money(t.amount, t.currency)}</b></div><div><span class="label">${T('Noble commission')} ${pol.commission * 100}%</span><b>${money(fee, t.currency)}</b></div><div><span class="label">${T('Seller receives')}</span><b>${money(t.amount - fee, t.currency)}</b></div></div>
     ${deadline ? `<div class="notice small">${deadline}</div>` : ''}
     ${t.status === 'held' || t.status === 'disputed' ? `<div class="confirms">${conf('viewing', 'buyer', esc(b.name.split(' ')[0]))}${conf('viewing', 'seller', esc(s.name.split(' ')[0]))}${conf('handover', 'buyer', esc(b.name.split(' ')[0]))}${conf('handover', 'seller', esc(s.name.split(' ')[0]))}</div>` : ''}
     ${t.status === 'released' && l.type !== 'rent' ? `<div class="notice escrow small">Agreement <span class="mono">${t.agreement}</span> recorded. Legal transfer of title completes offline at the Lands Registry; the balance is paid through the buyer's advocate.</div>` : ''}
     ${rating}
     ${acts ? `<div class="row">${acts}</div>` : ''}
-    <details><summary class="small muted" style="cursor:pointer">Activity log (${t.log.length})</summary><ol class="log">${t.log.map(([ts, x]) => `<li><span class="mono">${fmtTs(ts)}</span> · ${esc(x)}</li>`).join('')}</ol></details>
+    <details><summary class="small muted" style="cursor:pointer">${T('Activity log')} (${t.log.length})</summary><ol class="log">${t.log.map(([ts, x]) => `<li><span class="mono">${fmtTs(ts)}</span> · ${esc(x)}</li>`).join('')}</ol></details>
   </article>`;
 }
 function dealRecord(t) {
-  const l = listing(t.listingId), b = user(t.buyer), s = user(t.seller), fee = t.amount * COMMISSION;
+  const l = listing(t.listingId), b = user(t.buyer), s = user(t.seller), pol = polOf(t), fee = t.amount * pol.commission, cc = COUNTRIES[l.country] || C();
   const lines = [
     `NOBLE DEAL RECORD ${t.agreement || ''}`.trim(),
     `Escrow reference   ${t.id}`,
@@ -775,9 +834,10 @@ function dealRecord(t) {
     `Held in escrow     ${money(t.amount, t.currency)} via ${t.method}, ${fmtTs(t.paidAt)}`,
     `Viewing confirmed  ${t.viewingAt ? fmtTs(t.viewingAt) : '—'}`,
     `Handover confirmed ${t.releasedAt ? fmtTs(t.releasedAt) : '—'}`,
-    `Commission         ${money(fee, t.currency)} (${COMMISSION * 100}%)`,
+    `Commission         ${money(fee, t.currency)} (${pol.commission * 100}%)`,
     `Released to seller ${money(t.amount - fee, t.currency)}`,
-    l.type !== 'rent' ? `Note               Balance and legal transfer of title are completed offline at the Lands Registry.` : `Note               Deposit is held by the landlord under the tenancy terms agreed in chat.`
+    `Jurisdiction       ${cc.name}`,
+    l.type !== 'rent' ? `Note               Balance and legal transfer of title are completed offline at ${cc.registry}.` : `Note               Deposit is held by the landlord under the tenancy terms agreed in chat.`
   ];
   return lines.join('\n');
 }
@@ -787,14 +847,14 @@ function vAdmin() {
   const pend = S.listings.filter(l => l.status === 'pending');
   const reps = S.reports.filter(r => r.status === 'open');
   const disp = S.txns.filter(t => t.status === 'disputed');
-  const sub = [['queue', 'Pending listings', pend.length], ['reports', 'Reports', reps.length], ['disputes', 'Escrow disputes', disp.length], ['users', 'Accounts', Object.keys(S.users).length], ['audit', 'Audit log', S.audit.length]];
+  const sub = [['queue', T('Pending listings'), pend.length], ['reports', T('Reports'), reps.length], ['disputes', T('Escrow disputes'), disp.length], ['users', T('Accounts'), Object.keys(S.users).length], ['audit', T('Audit log'), S.audit.length]];
   let body = '';
   if (S.adminTab === 'queue') body = pend.map(l => {
     const o = user(l.ownerId), d = duplicatesOf(l.photos, l.id);
     const proofOk = !!l.proof || l.type === 'rent';
     const req = l.type === 'rent'
       ? [['lease', `Lease authority letter names ${esc(o.name)}${l.clientOwner ? ` or ${esc(l.clientOwner)}` : ''} as landlord or agent`]]
-      : [['name', `Name on title matches ${esc(l.clientOwner || o.name)}`], ['parcel', 'Parcel / LR number and acreage match the listing'], ['search', 'Registry search is dated within the last 30 days and shows no caveat']];
+      : [['name', `Name on title matches ${esc(l.clientOwner || o.name)}`], ['parcel', 'Parcel / LR number and size match the listing'], ['search', `${(COUNTRIES[l.country] || C()).registry} search is dated within the last 30 days and shows no caveat`]];
     const c = l.adminChecks || (l.adminChecks = {});
     const allChecked = req.every(([k]) => c[k]);
     return `<article class="panel qcard"><div class="ph" style="aspect-ratio:4/3;border-radius:6px;overflow:hidden">${photo(l.photos[0])}</div>
@@ -807,9 +867,9 @@ function vAdmin() {
           <li>${l.x != null ? '<span class="yes">✓</span> Location pinned' : '<span class="no">✗</span> No map pin'}</li>
         </ul>
         <div class="chk"><span class="label">Document check (admin ticks after reading the document)</span>${req.map(([k, txt]) => `<label><input type="checkbox" id="chk-${l.id}-${k}" data-chk="${k}" data-id="${l.id}" ${c[k] ? 'checked' : ''} ${proofOk ? '' : 'disabled'}><span>${txt}</span></label>`).join('')}</div></div>
-      <div class="stack" style="gap:6px;min-width:150px"><button class="btn primary" data-act="approve" data-id="${l.id}" ${proofOk && o.verified && allChecked ? '' : 'disabled title="Complete every check first"'}>Approve</button>
+      <div class="stack" style="gap:6px;min-width:150px"><button class="btn primary" data-act="approve" data-id="${l.id}" ${proofOk && o.verified && allChecked ? '' : 'disabled title="Complete every check first"'}>${T('Approve')}</button>
         <select id="rej-${l.id}" aria-label="Rejection reason" style="padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--bg)"><option>Missing proof of ownership</option><option>Duplicate or stolen photos</option><option>Price or details look misleading</option><option>Owner name does not match title</option><option>Registry search too old or shows a caveat</option></select>
-        <button class="btn danger" data-act="reject" data-id="${l.id}">Reject</button></div></article>`;
+        <button class="btn danger" data-act="reject" data-id="${l.id}">${T('Reject')}</button></div></article>`;
   }).join('') || '<div class="empty">The review queue is empty.</div>';
   if (S.adminTab === 'reports') body = reps.map(r => { const l = listing(r.listingId);
     return `<article class="panel row" style="justify-content:space-between"><div><b>${esc(l.title)}</b> <span class="small muted">· reported by ${esc(user(r.by).name)} ${ago(r.t)}</span><p>“${esc(r.reason)}”</p><p class="small muted">Lister: ${esc(user(l.ownerId).name)}. Chat history is available for review.</p></div>
@@ -817,7 +877,7 @@ function vAdmin() {
   if (S.adminTab === 'disputes') body = disp.map(t => txnCard(t, me())).join('') || '<div class="empty">No escrow disputes.</div>';
   if (S.adminTab === 'users') body = `<div class="panel tbl-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Verification</th><th>Rating</th><th>Listings</th><th></th></tr></thead><tbody>${Object.values(S.users).map(x => { const r = ratingOf(x.id); return `<tr><td>${esc(x.name)}</td><td>${ROLES[x.role].label}</td><td>${x.verified ? '<span class="pill ok">ID + phone</span>' : '<span class="pill warn">Unverified</span>'}</td><td>${r.n ? `<span class="star">★</span> ${r.avg.toFixed(1)} (${r.n})` : '<span class="muted">—</span>'}</td><td class="num">${S.listings.filter(l => l.ownerId === x.id).length}</td><td>${x.role === 'admin' ? '' : `<button class="btn small ${x.suspended ? '' : 'danger'}" data-act="suspend" data-id="${x.id}">${x.suspended ? 'Reinstate' : 'Suspend'}</button>`}</td></tr>`; }).join('')}</tbody></table></div>`;
   if (S.adminTab === 'audit') body = `<div class="panel tbl-wrap"><table><thead><tr><th>When</th><th>By</th><th>Action</th><th>Target</th></tr></thead><tbody>${S.audit.map(([t, by, a, tg]) => `<tr><td class="mono small">${fmtTs(t)}</td><td>${esc(by)}</td><td>${esc(a)}</td><td>${esc(tg)}</td></tr>`).join('')}</tbody></table></div>`;
-  return `<div class="page-head"><div><h2>Moderation</h2><p class="muted">Nothing goes live, and no disputed money moves, without an admin decision. Every decision is logged.</p></div></div>
+  return `<div class="page-head"><div><h2>${T('Moderation')}</h2><p class="muted">Nothing goes live, and no disputed money moves, without an admin decision. Every decision is logged. The queue covers every country; the document checklist names the registry for each listing's country.</p></div></div>
   <div class="subtabs">${sub.map(([k, n, c]) => `<button class="chip" data-act="atab" data-t="${k}" aria-pressed="${S.adminTab === k}">${n} <span class="mono">${c}</span></button>`).join('')}</div>
   <div class="stack">${body}</div>`;
 }
@@ -828,8 +888,8 @@ function vBlueprint() {
   <div class="bp">
     <section class="panel stack"><h3>What each listing holds</h3><ul><li>Type: sale, rent or land</li><li>Price and currency (KES, UGX, TZS, USD)</li><li>Exact location pinned on a map</li><li>Photos, checked for duplicates</li><li>Size in sqm or acres, bedrooms</li><li>Title / ownership status and proof document</li><li>The verified owner or agent behind it, with rating and deal history</li><li>Lifecycle: pending → live → paused / sold / let; relisting goes back through review</li></ul></section>
     <section class="panel stack"><h3>Controls that keep it safe</h3><ul><li>ID and phone verification before listing or paying</li><li>Pending queue with a document checklist the admin must complete before approval</li><li>Title deed or lease authority required for sale and land</li><li>Chat, offers and viewing appointments stay in-app; contact details are masked</li><li>Rate limits (${LISTING_LIMIT} listings a day, message bursts), duplicate-photo detection, user reports</li><li>Ratings only after a completed escrow deal, so they cannot be faked</li><li>Audit log of every moderation and escrow decision</li></ul></section>
-    <section class="panel stack"><h3>Transaction flow</h3><ol><li>Buyer pays a deposit or rent into escrow by mobile money or card.</li><li>Seller is notified; a viewing is agreed in chat, then both sides confirm it happened, then both confirm handover.</li><li>Noble releases funds minus ${COMMISSION * 100}% commission and issues a deal record, or refunds if the deal falls through. Disputes go to an admin.</li><li>No viewing within ${VIEWING_DAYS} days, or no handover within ${HANDOVER_DAYS} days of the viewing, refunds the buyer automatically.</li><li>Sales and land transfers finish offline at the registry; escrow covers the deposit and Noble records the agreement.</li></ol></section>
-    <section class="panel stack"><h3>Suggested build</h3><ul><li>Mobile app (React Native or Flutter) plus a web dashboard</li><li>API backend with PostgreSQL + PostGIS for users, listings, transactions</li><li>Map provider for geocoding and pins</li><li>Escrow-capable payments: M-Pesa / mobile money and card</li><li>KYC provider for ID and liveness checks; SMS OTP</li><li>Scheduled job for escrow deadlines and auto-refunds</li><li>Admin tools for the queue, reports, disputes, suspensions and audit</li></ul></section>
+    <section class="panel stack"><h3>Transaction flow</h3><ol><li>Buyer pays a deposit or rent into escrow by ${C().pay.join(', ').replace(/ \(.*?\)/g, '')}.</li><li>Seller is notified; a viewing is agreed in chat, then both sides confirm it happened, then both confirm handover.</li><li>Noble releases funds minus ${P().commission * 100}% commission and issues a deal record, or refunds if the deal falls through. Disputes go to an admin.</li><li>No viewing within ${P().viewingDays} days, or no handover within ${P().handoverDays} days of the viewing, refunds the buyer automatically.</li><li>Sales and land transfers finish offline at ${C().registry}; escrow covers the deposit and Noble records the agreement.</li></ol></section>
+    <section class="panel stack"><h3>One product, many countries</h3><ul><li>Each country is a row of settings: currency, payment rails, accepted ID documents, land registry, agent register, deposit and deadline policy, local areas.</li><li>Live now in this demo: ${Object.values(COUNTRIES).map(c => c.name).join(', ')}.</li><li>UI in ${Object.values(LANGS).join(', ')}; production uses ICU message files per locale.</li><li>Prices formatted with Intl in the local currency; sizes in the local unit.</li><li>Backend: PostgreSQL + PostGIS schema, a tested escrow state machine, provider adapter contracts and an OpenAPI spec live in <span class="mono">backend/</span>.</li></ul></section>
     <section class="panel wide stack"><h3>Role permissions</h3><div class="tbl-wrap"><table><thead><tr><th>Action</th>${Object.values(ROLES).map(r => `<th class="c">${r.label}</th>`).join('')}</tr></thead><tbody>${PERMS.map(([a, ...v]) => `<tr><td>${a}</td>${v.map(x => `<td class="c ${x ? 'yes' : 'no'}">${x ? '✓' : '·'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
       <p class="small muted">Try it: switch accounts at the top. Brian is unverified, so paying or messaging asks him to verify first. Grace is the admin.</p></section>
   </div>`;
@@ -838,22 +898,25 @@ function vBlueprint() {
 /* ---------- Modals ---------- */
 function modal(html) { $('#modal').innerHTML = html ? `<div class="scrim" data-act="close-scrim"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>` : ''; const f = $('#modal input, #modal select, #modal button'); if (f) f.focus(); }
 function openVerify() {
-  modal(`<h3>Verify your account</h3><p class="muted small">Every account confirms a national ID and a phone number before it can list, message or pay. This keeps scammers out.</p>
+  const c = C();
+  modal(`<h3>${T('Verify your account')}</h3><p class="muted small">Every account confirms an identity document and a phone number before it can list, message or pay. This keeps scammers out.</p>
   <form class="stack" data-form="verify">
-    <label class="field"><span>National ID or passport number</span><input id="v-id" name="idno" required minlength="6" placeholder="e.g. 31234567"></label>
-    <label class="field"><span>Photo of ID</span><input id="v-file" type="file" accept="image/*"><span class="hint">Checked by the KYC provider with a selfie match.</span></label>
-    <label class="field"><span>Phone number</span><div class="row"><input id="v-phone" name="phone" required placeholder="+254 7xx xxx xxx" style="flex:1"><button type="button" class="btn" data-act="otp">Send code</button></div></label>
-    <label class="field"><span>Code from SMS</span><input id="v-otp" name="otp" required inputmode="numeric" maxlength="4" placeholder="4 digits"><span class="hint" id="otp-hint">Tap “Send code” first.</span></label>
-    <div class="row"><button class="btn primary">Verify</button><button type="button" class="btn ghost" data-act="close-modal">Not now</button></div></form>`);
+    <label class="field"><span>Document</span><select id="v-doc" name="doc">${c.idDocs.map(d => `<option>${d}</option>`).join('')}</select></label>
+    <label class="field"><span>Document number</span><input id="v-id" name="idno" required minlength="6" placeholder="As printed on the document"></label>
+    <label class="field"><span>Photo of document</span><input id="v-file" type="file" accept="image/*"><span class="hint">Checked by the KYC provider for ${c.name} with a selfie match.</span></label>
+    <label class="field"><span>${T('Phone number')}</span><div class="row"><input id="v-phone" name="phone" required placeholder="${c.phone}" style="flex:1"><button type="button" class="btn" data-act="otp">${T('Send code')}</button></div></label>
+    <label class="field"><span>${T('Code from SMS')}</span><input id="v-otp" name="otp" required inputmode="numeric" maxlength="4" placeholder="4 digits"><span class="hint" id="otp-hint">Tap “${T('Send code')}” first.</span></label>
+    <div class="row"><button class="btn primary">${T('Verify')}</button><button type="button" class="btn ghost" data-act="close-modal">${T('Not now')}</button></div></form>`);
 }
 function openPay(l) {
   const u = me(), price = agreedPrice(l, u.id), dep = depositFor(l, price);
-  modal(`<h3>Pay into escrow</h3><p class="muted small">${esc(l.title)} · ${esc(l.place)}</p>
-  <div class="notice escrow"><span class="label">Amount</span><div class="price">${money(dep, l.currency)}</div><span class="small">${l.type === 'rent' ? 'First month + 1 month deposit' : '10% deposit'}. Held until you confirm the viewing and handover.</span></div>
+  const c = COUNTRIES[l.country] || C();
+  modal(`<h3>${T('Pay into escrow')}</h3><p class="muted small">${esc(l.title)} · ${esc(l.place)}, ${c.city}</p>
+  <div class="notice escrow"><span class="label">${T('Amount')}</span><div class="price">${money(dep, l.currency)}</div><span class="small">${depositLabel(l)}. Held until you confirm the viewing and handover.</span></div>
   <form class="stack" data-form="pay" data-id="${l.id}">
-    <label class="field"><span>Pay with</span><select id="p-method" name="method"><option>M-Pesa</option><option>Airtel Money</option><option>Card (Visa / Mastercard)</option></select></label>
-    <label class="field"><span>M-Pesa / mobile number or card</span><input id="p-acct" name="acct" required value="${esc(u.phone || '')}"><span class="hint">You will get a payment prompt on your phone.</span></label>
-    <div class="row"><button class="btn escrow">Pay ${money(dep, l.currency)}</button><button type="button" class="btn ghost" data-act="close-modal">Cancel</button></div></form>`);
+    <label class="field"><span>${T('Pay with')}</span><select id="p-method" name="method">${c.pay.map(m => `<option>${m}</option>`).join('')}</select></label>
+    <label class="field"><span>Mobile number, account or card</span><input id="p-acct" name="acct" required value="${esc(u.phone || '')}" placeholder="${c.phone}"><span class="hint">You will get a payment prompt on your phone or be redirected to your bank.</span></label>
+    <div class="row"><button class="btn escrow">${T('Pay')} ${money(dep, l.currency)}</button><button type="button" class="btn ghost" data-act="close-modal">${T('Cancel')}</button></div></form>`);
 }
 function openReport(l) {
   modal(`<h3>Report this listing</h3><form class="stack" data-form="report" data-id="${l.id}">
@@ -900,7 +963,7 @@ function finishTxn(t, out, by) {
   const l = listing(t.listingId);
   t.status = out;
   if (out === 'released') {
-    const fee = t.amount * COMMISSION;
+    const fee = t.amount * polOf(t).commission;
     t.agreement = 'AGR-' + (hash(t.id) % 90000 + 10000);
     t.releasedAt = Date.now();
     t.log.push([Date.now(), `${money(t.amount - fee, t.currency)} released to ${user(t.seller).name}; ${money(fee, t.currency)} commission retained.`]);
@@ -1039,6 +1102,8 @@ document.addEventListener('change', e => {
   if (t.id === 'as') { S.me = t.value; S.drawer = false; S.q.saved = false; if (['listing', 'sell', 'admin', 'messages'].includes(S.view)) S.view = 'browse'; render(); toast(`Now viewing as ${me().name}.`); return; }
   if (t.id === 'f-type') { keepDraft(); render(); return; }
   if (t.id === 'f-proof') { keepDraft(); render(); return; }
+  if (t.id === 'country') { S.country = t.value; S.q = { ...S.q, place: 'all', min: '', max: '' }; S.selected = null; S.draft = null; if (S.view === 'listing') S.view = 'browse'; render(); toast(`Now browsing ${C().name} in ${C().currency}.`); return; }
+  if (t.id === 'lang') { S.lang = t.value; render(); return; }
   const qmap = { 'q-place': 'place', 'q-min': 'min', 'q-max': 'max', 'q-sort': 'sort', 'q-beds': 'beds' };
   if (qmap[t.id]) { S.q[qmap[t.id]] = t.value; renderBrowseResults(); return; }
   if (t.dataset.chk) { const l = listing(t.dataset.id); (l.adminChecks = l.adminChecks || {})[t.dataset.chk] = t.checked; render(); }
@@ -1077,8 +1142,8 @@ document.addEventListener('submit', e => {
     toast('Viewing proposed.'); render(); return;
   }
   if (kind === 'pay') {
-    const l = listing(f.dataset.id), price = agreedPrice(l, u.id), dep = depositFor(l, price), method = String(fd.get('method')).split(' ')[0];
-    const t = { id: 'ESC-' + (20000 + hash(String(Date.now())) % 9999), listingId: l.id, buyer: u.id, seller: l.ownerId, kind: l.type === 'rent' ? 'rent' : 'deposit', amount: dep, price, currency: l.currency, method,
+    const l = listing(f.dataset.id), price = agreedPrice(l, u.id), dep = depositFor(l, price), method = String(fd.get('method')).replace(/\s*\(.*\)$/, '');
+    const t = { id: 'ESC-' + (20000 + hash(String(Date.now())) % 9999), listingId: l.id, buyer: u.id, seller: l.ownerId, kind: l.type === 'rent' ? 'rent' : 'deposit', amount: dep, price, currency: l.currency, method, policy: (COUNTRIES[l.country] || C()).policy,
       status: 'held', paidAt: Date.now(), viewing: { buyer: false, seller: false }, handover: { buyer: false, seller: false },
       log: [[Date.now(), `${money(dep, l.currency)} received via ${method}.`], [Date.now(), `${user(l.ownerId).name} notified.`]] };
     S.txns.unshift(t);
@@ -1099,7 +1164,7 @@ document.addEventListener('submit', e => {
     if (d.x == null) { toast('Drop a pin on the map to set the exact location.', true); return; }
     if (!d.photos.length) { toast('Add at least one photo.', true); return; }
     if (d.type !== 'rent' && !d.proofName) { toast('Sale and land listings need a title deed or ownership document.', true); return; }
-    S.listings.unshift({ id: 'l' + Date.now().toString(36), type: d.type, title: d.title, price: +d.price, currency: d.currency || 'KES', place: nearestPlace(d.x, d.y), x: d.x, y: d.y,
+    S.listings.unshift({ id: 'l' + Date.now().toString(36), country: S.country, type: d.type, title: d.title, price: +d.price, currency: d.currency || C().currency, place: nearestPlace(d.x, d.y), x: d.x, y: d.y,
       size: +d.size, unit: d.unit || 'sqm', beds: +d.beds || 0, titleStatus: d.titleStatus, ownerId: u.id, status: 'pending', photos: d.photos, created: Date.now(), views: 0, adminChecks: {},
       proof: d.proofName ? { file: d.proofName } : null, clientOwner: d.client || null });
     S.rate[u.id] = [...recent, Date.now()];
@@ -1109,7 +1174,7 @@ document.addEventListener('submit', e => {
 });
 
 /* Deep link: #l2 opens that listing */
-{ const h = (location.hash || '').slice(1); const l = /^l[a-z0-9]+$/.test(h) && listing(h); if (l && l.status === 'approved') { S.selected = l.id; S.view = 'listing'; } }
+{ const h = (location.hash || '').slice(1); const l = /^[a-z][a-z0-9]+$/.test(h) && listing(h); if (l && l.status === 'approved') { S.country = l.country; S.selected = l.id; S.view = 'listing'; } }
 render();
 })();
 </script>
