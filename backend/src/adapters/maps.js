@@ -5,8 +5,8 @@ import { config } from '../config.js';
 export function sandboxMaps(db) {
   return {
     id: 'sandbox', live: false,
-    async geocode(q, country) { const c = db.country(country); return c ? [{ label: `${q}, ${c.name}`, lat: c.center_lat, lng: c.center_lng }] : []; },
-    async reverse(lat, lng, country) { const c = db.country(country); return { placeName: c ? c.name : `${lat.toFixed(3)}, ${lng.toFixed(3)}` }; }
+    async geocode(q, country) { const c = await db.country(country); return c ? [{ label: `${q}, ${c.name}`, lat: c.center_lat, lng: c.center_lng }] : []; },
+    async reverse(lat, lng, country) { const c = await db.country(country); return { placeName: c ? c.name : `${lat.toFixed(3)}, ${lng.toFixed(3)}` }; }
   };
 }
 

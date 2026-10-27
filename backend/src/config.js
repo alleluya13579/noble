@@ -20,7 +20,8 @@ export const config = {
   port: +env('PORT', '8080'),
   env: env('NOBLE_ENV', 'development'),
   isDev: env('NOBLE_ENV', 'development') !== 'production',
-  dbPath: env('DATABASE_PATH', './data/noble.sqlite'),
+  // DATABASE_URL (postgres://…) selects PostgreSQL; otherwise DATABASE_PATH selects a SQLite file.
+  dbTarget: env('DATABASE_URL') || env('DATABASE_PATH', './data/noble.sqlite'),
   uploadDir: env('UPLOAD_DIR', './data/uploads'),
   baseUrl: env('PUBLIC_BASE_URL', 'http://localhost:8080'),
   sessionSecret: env('SESSION_SECRET', 'dev-session-secret'),

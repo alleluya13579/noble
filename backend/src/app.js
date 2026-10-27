@@ -1,4 +1,7 @@
 // Assembles the API: database, routes, auth, scheduler. `createApp` is used by server.js and by tests.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRouter, serve } from './http.js';
 import { openDatabase } from './db.js';
 import { makeAuth, registerAuthRoutes } from './auth.js';
@@ -8,19 +11,16 @@ import { registerTransactionRoutes } from './transactions.js';
 import { registerAdminRoutes } from './admin.js';
 import { startScheduler } from './scheduler.js';
 import { config, integrationStatus } from './config.js';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-export function createApp({ dbPath = config.dbPath, scheduler = true, logger = console } = {}) {
-  const db = openDatabase(dbPath);
+export async function createApp({ dbPath = config.dbTarget, scheduler = true, logger = console } = {}) {
+  const db = await openDatabase(dbPath);
   const r = createRouter();
-  r.get('/', () => ({ name: 'Noble API', version: '0.1.0', docs: '/openapi.yaml', integrations: integrationStatus().map(i => `${i.kind}:${i.id}=${i.mode}`) }));
   const here = path.dirname(fileURLToPath(import.meta.url));
+  r.get('/', () => ({ name: 'Noble API', version: '0.1.0', database: db.dialect, docs: '/openapi.yaml', app: '/app', integrations: integrationStatus().map(i => `${i.kind}:${i.id}=${i.mode}`) }));
+  r.get('/health', async () => ({ ok: true, database: db.dialect, time: new Date().toISOString(), countries: (await db.get('SELECT COUNT(*) n FROM countries')).n }));
   r.get('/openapi.yaml', () => ({ __file: true, contentType: 'application/yaml', bytes: fs.readFileSync(path.join(here, '..', 'openapi.yaml')) }));
   // The web client (web/index.html) is served by the API itself, so one process is the whole product.
   r.get('/app', () => ({ __file: true, contentType: 'text/html; charset=utf-8', bytes: fs.readFileSync(path.join(here, '..', '..', 'web', 'index.html')) }));
-  r.get('/health', () => ({ ok: true, time: new Date().toISOString() }));
   registerAuthRoutes(r, db);
   registerListingRoutes(r, db);
   registerThreadRoutes(r, db);
@@ -28,5 +28,5 @@ export function createApp({ dbPath = config.dbPath, scheduler = true, logger = c
   registerAdminRoutes(r, db);
   const server = serve(r, { authenticate: makeAuth(db), logger });
   const stop = scheduler ? startScheduler(db, 60e3, logger) : () => {};
-  return { server, db, close: () => new Promise(res => { stop(); server.close(() => { db.raw.close(); res(); }); }) };
+  return { server, db, close: () => new Promise(res => { stop(); server.close(async () => { await db.close(); res(); }); }) };
 }

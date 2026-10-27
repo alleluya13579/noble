@@ -37,7 +37,9 @@ cd backend && cp .env.example .env && node src/server.js
 
 Sign in with any phone number (development mode shows the SMS code on screen), verify with any document number (sandbox KYC), submit a listing as a seller, approve it as the admin (the phone in `ADMIN_PHONES`), then pay into escrow as a buyer. The web app can also be opened from anywhere with `?api=https://your-api-host`.
 
-Every external provider (M-Pesa, Paystack, Flutterwave, Stripe, Smile Identity, Onfido, Africa's Talking, Twilio, Mapbox, S3) is a slot: it runs in sandbox mode until its API keys are entered in `.env`, then goes live with no code change. The startup log and `GET /admin/integrations` show what is live and which keys unlock the rest. `npm test` runs 28 tests covering the escrow state machine and the API end to end. See [`backend/README.md`](backend/README.md).
+Every external provider (M-Pesa, Paystack, Flutterwave, Stripe, Smile Identity, Onfido, Africa's Talking, Twilio, Mapbox, S3) is a slot: it runs in sandbox mode until its API keys are entered in `.env`, then goes live with no code change. The startup log and `GET /admin/integrations` show what is live and which keys unlock the rest.
+
+The database is SQLite out of the box and **PostgreSQL** when `DATABASE_URL` is set (`backend/schema.sql`); the 29-test suite runs on both. See [`backend/README.md`](backend/README.md).
 
 ## Docs
 

@@ -96,8 +96,8 @@ noble/
 ├── prototype/        standalone demo with seeded data (no backend needed)
 ├── web/              the web client; talks to the API; served at /app
 ├── backend/
-│   ├── schema.sql           PostgreSQL + PostGIS (production scale)
-│   ├── schema.sqlite.sql    SQLite edition used by the bundled server
+│   ├── schema.sql           PostgreSQL (DATABASE_URL); PostGIS upgrade noted inside
+│   ├── schema.sqlite.sql    SQLite edition (default, zero setup)
 │   ├── openapi.yaml         API contract
 │   ├── .env.example         every provider key and what it unlocks
 │   └── src/                 server, routes, escrow.js, adapters/ (payments, kyc, sms, maps, storage)

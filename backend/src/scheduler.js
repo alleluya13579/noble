@@ -5,7 +5,7 @@ import * as E from './escrow.js';
 import { applyTransition } from './transactions.js';
 
 export async function runOnce(db, now = Date.now(), logger = console) {
-  const rows = db.all("SELECT id, data FROM transactions WHERE state IN ('held','viewing_confirmed','payment_pending','initiated')");
+  const rows = await db.all("SELECT id, data FROM transactions WHERE state IN ('held','viewing_confirmed','payment_pending','initiated')");
   let applied = 0;
   for (const row of rows) {
     const txn = JSON.parse(row.data);
@@ -14,7 +14,7 @@ export async function runOnce(db, now = Date.now(), logger = console) {
     try { await applyTransition(db, row.id, due, { actor: E.ACTORS.SYSTEM, now, note: 'scheduler' }); applied++; }
     catch (e) { logger.error(`scheduler: ${due} on ${txn.reference} failed: ${e.message}`); }
   }
-  const expired = db.run("UPDATE messages SET decision = 'expired' WHERE decision = 'pending' AND ((kind = 'offer' AND created_at < ?) OR (kind = 'viewing' AND viewing_at < ?))", now - 7 * 86400e3, now).changes;
+  const expired = (await db.run("UPDATE messages SET decision = 'expired' WHERE decision = 'pending' AND ((kind = 'offer' AND created_at < ?) OR (kind = 'viewing' AND viewing_at < ?))", now - 7 * 86400e3, now)).changes;
   return { applied, expired };
 }
 

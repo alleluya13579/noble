@@ -11,7 +11,13 @@ const { runOnce } = await import('../src/scheduler.js');
 
 let app, base;
 const quiet = { log() {}, error: console.error };
-before(async () => { app = createApp({ dbPath: ':memory:', scheduler: false, logger: quiet }); await new Promise(r => app.server.listen(0, r)); base = `http://127.0.0.1:${app.server.address().port}`; });
+// Runs on in-memory SQLite by default; set TEST_DATABASE_URL=postgres://… to run the same suite on PostgreSQL.
+const TARGET = process.env.TEST_DATABASE_URL || ':memory:';
+before(async () => {
+  app = await createApp({ dbPath: TARGET, scheduler: false, logger: quiet });
+  if (app.db.dialect === 'postgres') for (const t of ['ratings', 'transaction_transitions', 'payment_events', 'transactions', 'reports', 'messages_raw', 'messages', 'threads', 'saved_listings', 'ownership_documents', 'listing_photos', 'listings', 'sessions', 'otp_codes', 'rate_limits', 'audit_log', 'users']) await app.db.run(`DELETE FROM ${t}`);
+  await new Promise(r => app.server.listen(0, r)); base = `http://127.0.0.1:${app.server.address().port}`;
+});
 after(() => app.close());
 
 async function api(method, path, { token, body, raw, contentType } = {}) {
@@ -138,7 +144,7 @@ test('both confirm viewing then handover; release pays out minus commission, clo
   assert.equal(r.data.commission_minor, 8000_00); assert.equal(r.data.payout_minor, 152000_00); assert.ok(r.data.agreement_ref);
   const l = await api('GET', `/listings/${S.listing.id}`); assert.equal(l.data.status, 'closed');
   const rec = await api('GET', `/transactions/${S.txn.id}/record`, { token: S.seller.token }); assert.equal(rec.data.jurisdiction, 'Kenya'); assert.equal(rec.data.released_to_seller, 'KES 152,000');
-  const events = app.db.all('SELECT event_type FROM payment_events WHERE transaction_id = ? ORDER BY id', S.txn.id).map(e => e.event_type);
+  const events = (await app.db.all('SELECT event_type FROM payment_events WHERE transaction_id = ? ORDER BY id', S.txn.id)).map(e => e.event_type);
   assert.deepEqual(events, ['collect_requested', 'collect_confirmed', 'payout_sent']);
 });
 
@@ -183,4 +189,8 @@ test('reports and suspension', async () => {
 test('integrations report sandbox mode and the keys that unlock each provider', async () => {
   const r = await api('GET', '/admin/integrations', { token: S.admin.token });
   assert.ok(r.data.every(i => i.mode === 'sandbox')); assert.ok(r.data.find(i => i.id === 'mpesa').unlock_with.includes('MPESA_CONSUMER_KEY'));
+});
+
+test('health reports which database backend is in use', async () => {
+  const r = await api('GET', '/health'); assert.equal(r.data.database, TARGET.startsWith('postgres') ? 'postgres' : 'sqlite'); assert.equal(r.data.countries, 9);
 });

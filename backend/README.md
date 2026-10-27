@@ -2,7 +2,9 @@
 
 The complete marketplace API: accounts with phone OTP and KYC, moderated listings with ownership documents, in-app chat with offers and viewings, escrow with a tested state machine, payouts, refunds, disputes, ratings, deal records, reports, suspensions and an audit log.
 
-**Zero dependencies.** Node 22+ only: built-in HTTP server and built-in SQLite. `npm install` is not needed.
+**Zero dependencies by default.** Node 22+ only: built-in HTTP server and built-in SQLite. `npm install` is not needed.
+
+**PostgreSQL when you want it.** Set `DATABASE_URL=postgres://user:pass@host:5432/noble` and run `npm install` (pulls the `pg` driver); `schema.sql` is applied on start and the same code runs unchanged. The test suite runs on both backends (`npm test`, `npm run test:pg`).
 
 **Every external provider is a slot.** Payments, KYC, SMS, maps and storage are adapters. With no keys they run in *sandbox* mode (simulated, logged, nothing charged or sent) so the whole system works end to end on day one. Enter a provider's keys in `.env` and that provider goes live; nothing else changes.
 
@@ -112,5 +114,5 @@ backend/
 - Put the API behind TLS; set `PUBLIC_BASE_URL` to the public address so providers can reach the webhooks.
 - Set `SESSION_SECRET`, `ID_HASH_SECRET`, `DOCS_ENCRYPTION_KEY` to long random values and keep them stable.
 - Run one scheduler: either keep it in a single API instance or call `runOnce()` from a cron job.
-- For PostgreSQL, apply `schema.sql` and replace `src/db.js` with a pg-backed implementation of the same five methods (`run`, `get`, `all`, `tx`, `country`).
+- Use PostgreSQL in production (`DATABASE_URL`). `src/db.js` holds both backends behind one async interface; application SQL is written once and the Postgres backend rewrites `?` placeholders and `INSERT OR IGNORE`. For PostGIS radius queries at scale, see the comment at the top of `schema.sql`.
 - Holding client money is regulated; launch each country with the licence or a licensed escrow partner.

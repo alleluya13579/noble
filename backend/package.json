@@ -8,6 +8,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "NOBLE_ENV=development node --watch src/server.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "test:pg": "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://postgres@127.0.0.1:5432/noble_test} node --test test/*.test.js"
+  },
+  "optionalDependencies": {
+    "pg": "^8.23.1"
   }
 }
