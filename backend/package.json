@@ -1,0 +1,11 @@
+{
+  "name": "@noble/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Noble core: transaction process, schema and API contract",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
