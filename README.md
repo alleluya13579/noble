@@ -39,7 +39,16 @@ Sign in with any phone number (development mode shows the SMS code on screen), v
 
 Every external provider (M-Pesa, Paystack, Flutterwave, Stripe, Smile Identity, Onfido, Africa's Talking, Twilio, Mapbox, S3) is a slot: it runs in sandbox mode until its API keys are entered in `.env`, then goes live with no code change. The startup log and `GET /admin/integrations` show what is live and which keys unlock the rest.
 
-The database is SQLite out of the box and **PostgreSQL** when `DATABASE_URL` is set (`backend/schema.sql`); the 29-test suite runs on both. See [`backend/README.md`](backend/README.md).
+The database is SQLite out of the box and **PostgreSQL** when `DATABASE_URL` is set (`backend/schema.sql`); the 35-test suite runs on both. See [`backend/README.md`](backend/README.md).
+
+## Hosting
+
+```sh
+cp backend/.env.example backend/.env   # fill in secrets and provider keys
+docker compose up -d                   # API + web app + PostgreSQL
+```
+
+[`docs/DEPLOY.md`](docs/DEPLOY.md) covers hosts (Docker, Fly, Railway/Render, Kubernetes), the production secrets checklist (the server refuses to start in production with development defaults), TLS, webhook URLs per provider, backups, metrics and logs, and the per-country launch checklist. CI runs the suite on SQLite and PostgreSQL and builds the image on every push.
 
 ## Docs
 

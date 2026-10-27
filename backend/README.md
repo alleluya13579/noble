@@ -109,6 +109,17 @@ backend/
 | Mapbox | Geocodes a typed address when a listing has no pin, reverse-geocodes pins into place names. |
 | S3 | Photos and encrypted documents move off local disk. |
 
+## Operations
+
+- `GET /health` liveness, `GET /ready` database check, `GET /metrics` Prometheus metrics (optionally behind `METRICS_TOKEN`).
+- Security: HSTS/`nosniff`/frame-deny headers, CSP on the web app, configurable `CORS_ORIGINS`, per-IP rate limit (`IP_RATE_LIMIT_PER_MIN`) plus per-account business limits, upload size cap and image magic-byte checks, request ids (`X-Request-Id`), JSON logs (`LOG_FORMAT=json`).
+- In production the server refuses to start with development defaults (`productionProblems()` in `src/config.js`).
+- Scheduler: deadlines, stale offers, expired sessions and OTP codes; on PostgreSQL only one instance runs it (advisory lock).
+- Migrations: `migrations/NNN_name.sql`, applied once on start and recorded in `schema_migrations`.
+- Notifications: every SMS-worthy event also lands in the user's inbox (`GET /notifications`).
+
+Full deployment guide: [`../docs/DEPLOY.md`](../docs/DEPLOY.md).
+
 ## Production notes
 
 - Put the API behind TLS; set `PUBLIC_BASE_URL` to the public address so providers can reach the webhooks.

@@ -1,6 +1,7 @@
 // In-app messaging: threads per listing and buyer; text (masked), offers and viewing proposals with decisions.
 import { bad, forbidden, notFound, conflict, tooMany } from './http.js';
 import { requireUser, requireVerified, publicUser } from './auth.js';
+import { notify } from './notifications.js';
 
 const mask = s => s.replace(/\+?\d[\d\s().-]{7,}\d/g, '[number hidden]').replace(/[^\s@]+@[^\s@]+\.[a-z]{2,}/gi, '[email hidden]').replace(/\b(whatsapp|telegram|signal)\b\s*[:\-]?\s*\S+/gi, '[contact hidden]');
 
@@ -40,6 +41,8 @@ export function registerThreadRoutes(r, db) {
       const at = Date.parse(b.viewing_at); if (!at || at < now + 30 * 60e3) throw bad('viewing_at must be an ISO datetime at least 30 minutes ahead');
       await db.run("INSERT INTO messages (id, thread_id, sender_id, kind, viewing_at, decision, created_at) VALUES (?,?,?,'viewing',?,'pending',?)", id, t.id, u.id, at, now);
     } else throw bad('kind must be text, offer or viewing');
+    const other = u.id === t.buyer_id ? t.owner_id : t.buyer_id, lt = await db.get('SELECT title FROM listings WHERE id = ?', t.listing_id);
+    await notify(db, other, b.kind === 'text' ? `New message from ${u.full_name} about “${lt.title}”.` : b.kind === 'offer' ? `${u.full_name} made an offer on “${lt.title}”.` : `${u.full_name} proposed a viewing of “${lt.title}”.`, { link: '#messages', sms: b.kind !== 'text' });
     return [201, msgView(await db.get('SELECT * FROM messages WHERE id = ?', id))];
   });
 
@@ -53,6 +56,7 @@ export function registerThreadRoutes(r, db) {
     const l = await db.get('SELECT currency FROM listings WHERE id = ?', t.listing_id);
     if (m.kind === 'offer') await sys(db, t.id, `${u.full_name} ${d} the offer of ${l.currency} ${(m.offer_minor / 100).toLocaleString('en-US')}.${d === 'accepted' ? ' The buyer can now pay into escrow at this price.' : ''}`);
     else await sys(db, t.id, d === 'accepted' ? `Viewing agreed for ${new Date(Number(m.viewing_at)).toUTCString()}. Both sides confirm it happened from the escrow screen afterwards.` : `${u.full_name} asked for another time.`);
+    await notify(db, m.sender_id, `${u.full_name} ${d} your ${m.kind === 'offer' ? 'offer' : 'viewing proposal'}.`, { link: '#messages', sms: true });
     return msgView(await db.get('SELECT * FROM messages WHERE id = ?', m.id));
   });
 }

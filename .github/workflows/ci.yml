@@ -1,0 +1,56 @@
+name: CI
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: noble_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install the optional PostgreSQL driver
+        working-directory: backend
+        run: npm install --no-audit --no-fund
+      - name: Tests on SQLite
+        working-directory: backend
+        run: npm test
+      - name: Tests on PostgreSQL
+        working-directory: backend
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/noble_test
+        run: npm run test:pg
+      - name: Production guard refuses development defaults
+        working-directory: backend
+        run: |
+          set +e
+          NOBLE_ENV=production node -e "import('./src/app.js').then(m => m.createApp({ dbPath: ':memory:', scheduler: false }))" 2>&1 | grep -q 'refusing to start in production' && echo "guard ok" || (echo "guard did not trigger" && exit 1)
+
+  image:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the container image
+        run: docker build -f backend/Dockerfile -t noble:ci .
+      - name: Boot it and check readiness
+        run: |
+          docker run -d --name noble -p 8080:8080 -e NOBLE_ENV=development noble:ci
+          for i in $(seq 1 20); do curl -fs http://localhost:8080/ready && break || sleep 1; done
+          curl -fs http://localhost:8080/ready

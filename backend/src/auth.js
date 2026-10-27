@@ -64,6 +64,8 @@ export function registerAuthRoutes(r, db) {
   });
 
   r.get('/me', ctx => publicUser(db, requireUser(ctx)));
+  r.post('/auth/logout', async ctx => { requireUser(ctx); const m = /^Bearer (.+)$/.exec(ctx.req.headers.authorization || ''); await db.run('DELETE FROM sessions WHERE token_hash = ?', sha(m[1])); return [204]; });
+  r.post('/auth/logout-all', async ctx => { const u = requireUser(ctx); await db.run('DELETE FROM sessions WHERE user_id = ?', u.id); return [204]; });
 
   r.post('/auth/kyc', async ctx => {
     const u = requireUser(ctx), c = await db.country(u.country_code);

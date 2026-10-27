@@ -5,7 +5,7 @@ import { bad, forbidden, notFound, conflict } from './http.js';
 import { requireUser, requireVerified, publicUser } from './auth.js';
 import * as E from './escrow.js';
 import { gatewayForMethod, gatewayById } from './adapters/payments.js';
-import { smsFor } from './adapters/sms.js';
+import { notify } from './notifications.js';
 
 const cbSecret = id => crypto.createHmac('sha256', config.sessionSecret).update('cb:' + id).digest('hex').slice(0, 24);
 const iso = t => (t ? new Date(Number(t)).toISOString() : null);
@@ -113,7 +113,7 @@ export async function applyTransition(db, id, name, ctx) {
 
 const fmt = t => `${t.currency} ${(t.amountMinor / 100).toLocaleString('en-US')}`;
 async function notifyParties(db, txn, text) {
-  for (const id of [txn.buyerId, txn.sellerId]) { const u = await db.get('SELECT phone_e164 FROM users WHERE id = ?', id); if (u?.phone_e164) smsFor(u.phone_e164).send(u.phone_e164, text).catch(() => {}); }
+  for (const id of [txn.buyerId, txn.sellerId]) await notify(db, id, text, { link: '#escrow', sms: true });
 }
 
 export async function dealRecord(db, row, txn) {

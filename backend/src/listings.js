@@ -1,5 +1,6 @@
 // Listings: search, create (goes to the moderation queue), lifecycle, photos, ownership documents, saves, reports.
 import crypto from 'node:crypto';
+import { config } from './config.js';
 import { bad, forbidden, notFound, conflict, tooMany } from './http.js';
 import { requireUser, requireVerified, publicUser } from './auth.js';
 import { storage, encrypt, decrypt } from './adapters/storage.js';
@@ -93,6 +94,9 @@ export function registerListingRoutes(r, db) {
   r.post('/listings/:id/photos', async ctx => {
     const u = requireUser(ctx), l = await own(db, ctx, u);
     if (!ctx.contentType.startsWith('image/') || !ctx.raw.length) throw bad('send the image bytes with an image/* content type');
+    if (ctx.raw.length > config.maxUploadBytes) throw bad(`image larger than ${config.maxUploadBytes / 1048576} MB`);
+    const sniffed = sniffImage(ctx.raw); if (!sniffed) throw bad('file is not a JPEG, PNG, WebP or HEIC image');
+    ctx.contentType = sniffed;
     const count = (await db.get('SELECT COUNT(*) n FROM listing_photos WHERE listing_id = ?', l.id)).n;
     if (count >= 12) throw conflict('up to 12 photos per listing');
     const hash = crypto.createHash('sha256').update(ctx.raw).digest('hex');
@@ -142,3 +146,12 @@ async function own(db, ctx, u) { const l = await db.get('SELECT * FROM listings 
 async function exists(db, id) { const l = await db.get('SELECT * FROM listings WHERE id = ?', id); if (!l) throw notFound('listing not found'); return l; }
 /** Slot for a perceptual hash (pHash/blockhash). Returns null until an image decoder is wired in. */
 async function perceptualHash(bytes) { return null; }
+/** Content-type from magic bytes, so a renamed script cannot be stored as a photo. */
+export function sniffImage(b) {
+  if (b.length < 12) return null;
+  if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF) return 'image/jpeg';
+  if (b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) return 'image/png';
+  if (b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP') return 'image/webp';
+  if (b.subarray(4, 8).toString('latin1') === 'ftyp' && /^(heic|heix|mif1|heif)/.test(b.subarray(8, 12).toString('latin1'))) return 'image/heic';
+  return null;
+}

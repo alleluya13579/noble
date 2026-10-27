@@ -1,0 +1,47 @@
+# Noble: API + web app + PostgreSQL. `docker compose up` then open http://localhost:8080/app
+# Copy backend/.env.example to backend/.env first and fill in the provider keys you have.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: noble
+      POSTGRES_USER: noble
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-noble}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U noble -d noble"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - path: backend/.env
+        required: false
+    environment:
+      DATABASE_URL: postgres://noble:${POSTGRES_PASSWORD:-noble}@db:5432/noble
+      PORT: "8080"
+      NOBLE_ENV: ${NOBLE_ENV:-development}
+      UPLOAD_DIR: /data/uploads
+      TRUST_PROXY: "true"
+    volumes:
+      - uploads:/data/uploads
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:

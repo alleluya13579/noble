@@ -28,6 +28,12 @@ export const config = {
   idHashSecret: env('ID_HASH_SECRET', 'dev-id-hash-secret'),
   docsKey: env('DOCS_ENCRYPTION_KEY') || crypto.randomBytes(32).toString('hex'),
   adminPhones: env('ADMIN_PHONES').split(',').map(s => s.trim()).filter(Boolean),
+  corsOrigins: env('CORS_ORIGINS', '*').split(',').map(s => s.trim()).filter(Boolean),
+  trustProxy: env('TRUST_PROXY', 'false') === 'true',
+  logJson: env('LOG_FORMAT', 'text') === 'json',
+  maxUploadBytes: +env('MAX_UPLOAD_MB', '8') * 1024 * 1024,
+  ipRateLimit: +env('IP_RATE_LIMIT_PER_MIN', '300'),
+  metricsToken: env('METRICS_TOKEN'),
 
   payments: {
     mpesa: { configured: has('MPESA_CONSUMER_KEY', 'MPESA_CONSUMER_SECRET', 'MPESA_SHORTCODE', 'MPESA_PASSKEY'), env: env('MPESA_ENV', 'sandbox'), key: env('MPESA_CONSUMER_KEY'), secret: env('MPESA_CONSUMER_SECRET'), shortcode: env('MPESA_SHORTCODE'), passkey: env('MPESA_PASSKEY'), initiator: env('MPESA_B2C_INITIATOR'), securityCredential: env('MPESA_B2C_SECURITY_CREDENTIAL') },
@@ -59,6 +65,20 @@ export const config = {
   maps: { mapbox: { configured: has('MAPBOX_TOKEN'), token: env('MAPBOX_TOKEN') } },
   storage: { s3: { configured: has('S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'), endpoint: env('S3_ENDPOINT'), bucket: env('S3_BUCKET'), key: env('S3_ACCESS_KEY_ID'), secret: env('S3_SECRET_ACCESS_KEY'), region: env('S3_REGION', 'auto') } }
 };
+
+/** Refuse to start in production with development defaults. Returns the list of problems. */
+export function productionProblems(c = config) {
+  if (c.isDev) return [];
+  const p = [];
+  if (c.sessionSecret === 'dev-session-secret' || c.sessionSecret.length < 32) p.push('SESSION_SECRET must be a random string of at least 32 characters');
+  if (c.idHashSecret === 'dev-id-hash-secret' || c.idHashSecret.length < 32) p.push('ID_HASH_SECRET must be a random string of at least 32 characters');
+  if (!/^[0-9a-f]{64}$/i.test(env('DOCS_ENCRYPTION_KEY'))) p.push('DOCS_ENCRYPTION_KEY must be 64 hex characters (32 bytes); generate with: openssl rand -hex 32');
+  if (!/^https:\/\//.test(c.baseUrl)) p.push('PUBLIC_BASE_URL must be an https:// URL so providers can reach the webhooks');
+  if (c.corsOrigins.includes('*')) p.push('CORS_ORIGINS must list the web app origin(s), not *');
+  if (!c.adminPhones.length) p.push('ADMIN_PHONES must name at least one admin');
+  if (!c.storage.s3.configured && !env('UPLOAD_DIR')) p.push('set S3_* for durable storage, or an UPLOAD_DIR on a persistent volume');
+  return p;
+}
 
 /** Summary for GET /admin/integrations: what is live, what is sandboxed, which keys unlock it. */
 export function integrationStatus() {

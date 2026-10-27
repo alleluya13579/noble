@@ -17,7 +17,30 @@ const isPostgres = target => /^postgres(ql)?:\/\//i.test(target);
 
 export async function openDatabase(target = ':memory:') {
   const core = isPostgres(target) ? await openPostgres(target) : await openSqlite(target);
-  return withHelpers(core);
+  const db = withHelpers(core);
+  await migrate(db);
+  return db;
+}
+
+/**
+ * Migrations: the base schema is applied on open (idempotent CREATE IF NOT EXISTS); numbered files in
+ * backend/migrations/NNN_name.sql run once each, recorded in schema_migrations. Write Postgres-compatible
+ * SQL that SQLite also accepts, or put dialect-specific statements in NNN_name.postgres.sql / NNN_name.sqlite.sql.
+ */
+export async function migrate(db) {
+  await db.run('CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at BIGINT NOT NULL)');
+  const dir = path.join(here, '..', 'migrations');
+  if (!fs.existsSync(dir)) return [];
+  const done = new Set((await db.all('SELECT name FROM schema_migrations')).map(r => r.name));
+  const applied = [];
+  for (const f of fs.readdirSync(dir).filter(f => /^\d+_.+\.sql$/.test(f)).sort()) {
+    const m = /^(\d+_[^.]+)(?:\.(postgres|sqlite))?\.sql$/.exec(f); if (!m) continue;
+    if (m[2] && m[2] !== db.dialect) continue;
+    if (done.has(m[1])) continue;
+    await db.tx(async () => { await db.exec(fs.readFileSync(path.join(dir, f), 'utf8')); await db.run('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)', m[1], Date.now()); });
+    applied.push(m[1]);
+  }
+  return applied;
 }
 
 /* ---------- SQLite ---------- */
@@ -33,6 +56,10 @@ async function openSqlite(file) {
     async get(sql, ...p) { return raw.prepare(sql).get(...p) ?? null; },
     async all(sql, ...p) { return raw.prepare(sql).all(...p); },
     async tx(fn) { if (depth++) { try { return await fn(); } finally { depth--; } } raw.exec('BEGIN'); try { const r = await fn(); raw.exec('COMMIT'); return r; } catch (e) { raw.exec('ROLLBACK'); throw e; } finally { depth--; } },
+    async exec(sql) { raw.exec(sql); },
+    async ping() { raw.prepare('SELECT 1').get(); return true; },
+    async tryLock() { return true; },          // single process: always the leader
+    async unlock() {},
     async close() { raw.close(); }
   };
 }
@@ -63,9 +90,21 @@ async function openPostgres(url) {
       catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; }
       finally { client.release(); }
     },
-    async close() { await pool.end(); }
+    async exec(sql) { await (als.getStore() || pool).query(sql); },
+    async ping() { await pool.query('SELECT 1'); return true; },
+    // Advisory lock so that only one instance runs the scheduler. Held on a dedicated connection until unlock().
+    async tryLock(name) {
+      const key = parseInt(crypto.createHash('sha256').update(name).digest('hex').slice(0, 8), 16);
+      const client = await pool.connect();
+      const r = await client.query('SELECT pg_try_advisory_lock($1) ok', [key]);
+      if (r.rows[0].ok) { locks.set(name, client); return true; }
+      client.release(); return false;
+    },
+    async unlock(name) { const c = locks.get(name); if (c) { await c.query('SELECT pg_advisory_unlock_all()').catch(() => {}); c.release(); locks.delete(name); } },
+    async close() { for (const [n] of locks) await this.unlock(n); await pool.end(); }
   };
 }
+const locks = new Map();
 
 /* ---------- Shared helpers ---------- */
 function withHelpers(db) {

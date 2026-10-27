@@ -76,6 +76,7 @@ dl.kv { display: grid; grid-template-columns: max-content minmax(0,1fr); gap: 8p
 .scrim { position: fixed; inset: 0; background: color-mix(in srgb, var(--ink) 45%, transparent); display: grid; place-items: center; z-index: 50; padding: 16px; } .modal { background: var(--surface); border-radius: 14px; width: min(520px,100%); max-height: 90vh; overflow-y: auto; padding: 22px; display: grid; gap: 14px; }
 .toasts { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); display: grid; gap: 8px; z-index: 60; max-width: calc(100vw - 32px); } .toast { background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 8px; font-size: .88rem; box-shadow: 0 6px 20px rgba(0,0,0,.18); } .toast.bad { background: var(--bad); color: #fff; }
 .empty { padding: 28px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--r); }
+.drawer { position: absolute; right: 0; top: 100%; width: min(340px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 10px; display: grid; gap: 6px; z-index: 30; max-height: 60vh; overflow-y: auto; } .drawer div { font-size: .85rem; padding: 6px 8px; border-radius: 6px; background: var(--sunk); }
 .signin { max-width: 440px; margin: 40px auto; }
 .api { font-family: var(--f-mono); font-size: .72rem; color: var(--muted); }
 @media (max-width: 900px) { .browse,.detail,.chat { grid-template-columns: minmax(0,1fr); } .mapbox { position: static; } .qcard { grid-template-columns: minmax(0,1fr); } .qcard .ph { max-width: 220px; } .search { grid-template-columns: repeat(2,minmax(0,1fr)); } .search .q { grid-column: 1 / -1; } }
@@ -140,7 +141,9 @@ function renderChrome() {
   const u = S.me;
   $('#who').innerHTML = `
     <select id="country" aria-label="Country">${S.countries.map(c => `<option value="${c.code}" ${c.code === S.country ? 'selected' : ''}>${esc(c.name)} · ${c.currency}</option>`).join('')}</select>
-    ${u ? `<span class="small"><b>${esc(u.full_name)}</b> <span class="muted">· ${u.role}</span></span>${verified() ? '<span class="pill ok">✓ Verified</span>' : '<button class="pill warn" data-act="verify" style="border:0;cursor:pointer">Unverified · verify now</button>'}<button class="btn ghost small" data-act="signout">Sign out</button>` : '<button class="btn primary" data-act="go" data-view="signin">Sign in</button>'}
+    ${u ? `<span class="small"><b>${esc(u.full_name)}</b> <span class="muted">· ${u.role}</span></span>${verified() ? '<span class="pill ok">✓ Verified</span>' : '<button class="pill warn" data-act="verify" style="border:0;cursor:pointer">Unverified · verify now</button>'}
+      <span style="position:relative"><button class="btn small" data-act="bell" aria-label="Notifications">Alerts${S.unread ? ` <span class="pill bad">${S.unread}</span>` : ''}</button>${S.bell ? `<div class="drawer">${(S.notes || []).length ? S.notes.slice(0, 10).map(n => `<div ${n.read ? 'style="opacity:.7"' : ''}>${esc(n.text)}<br><span class="muted small">${ago(n.created_at)}</span></div>`).join('') : '<span class="muted small">No alerts yet.</span>'}</div>` : ''}</span>
+      <button class="btn ghost small" data-act="signout">Sign out</button>` : '<button class="btn primary" data-act="go" data-view="signin">Sign in</button>'}
     <span class="api" title="API base URL">${esc(API)}</span>`;
   const tabs = [['browse', 'Browse']];
   if (u && ['seller', 'agent'].includes(u.role)) tabs.push(['sell', 'My listings']);
@@ -351,13 +354,15 @@ const VIEWS = { signin: vSignin, browse: vBrowse, listing: vListing, sell: vSell
 let rendering = false;
 async function render() {
   if (!S.me && !['browse', 'listing', 'signin'].includes(S.view)) S.view = 'signin';
+  if (S.me) { try { const n = await api('GET', '/notifications'); S.unread = n.unread; S.notes = n.items; } catch {} }
   renderChrome();
   try { $('#app').innerHTML = await (VIEWS[S.view] || vBrowse)(); }
   catch (e) { if (e.status === 401) { TOKEN = null; localStorage.removeItem('noble_token'); S.me = null; S.view = 'signin'; renderChrome(); $('#app').innerHTML = await vSignin(); toast('Please sign in again.', true); } else $('#app').innerHTML = `<div class="empty">Could not load: ${esc(e.message)}<br><span class="small">API: ${esc(API)}</span></div>`; }
   const m = $('#msgs'); if (m) m.scrollTop = m.scrollHeight;
   try { history.replaceState(null, '', S.view === 'listing' && S.selected ? '#' + S.selected : location.pathname + location.search); } catch {}
 }
-async function refreshMe() { if (!TOKEN) { S.me = null; return; } try { S.me = await api('GET', '/me'); } catch (e) { if (e.status === 401 || e.status === 403) { TOKEN = null; localStorage.removeItem('noble_token'); S.me = null; if (e.status === 403) toast(e.message, true); } } }
+async function refreshMe() { if (!TOKEN) { S.me = null; return; } try { S.me = await api('GET', '/me'); const n = await api('GET', '/notifications'); S.unread = n.unread; S.notes = n.items; } catch (e) { if (e.status === 401 || e.status === 403) { TOKEN = null; localStorage.removeItem('noble_token'); S.me = null; if (e.status === 403) toast(e.message, true); } } }
+setInterval(() => { if (S.me && !S.bell) refreshMe().then(renderChrome).catch(() => {}); }, 30000);
 async function act(fn) { try { await fn(); } catch (e) { if (e.status === 403 && /verification/.test(e.message)) openVerify(); else if (e.status === 401) { S.view = 'signin'; await render(); toast('Sign in to do that.', true); } else toast(e.message || 'Something went wrong', true); } }
 const needAuth = () => { if (!S.me) { S.view = 'signin'; render(); toast('Sign in to do that.', true); return false; } return true; };
 
@@ -369,7 +374,8 @@ document.addEventListener('click', e => {
     switch (a) {
       case 'go': S.view = el.dataset.view; break;
       case 'close-modal': modal(''); return;
-      case 'signout': TOKEN = null; localStorage.removeItem('noble_token'); S.me = null; S.view = 'browse'; break;
+      case 'signout': await api('POST', '/auth/logout').catch(() => {}); TOKEN = null; localStorage.removeItem('noble_token'); S.me = null; S.bell = false; S.view = 'browse'; break;
+      case 'bell': { S.bell = !S.bell; if (S.bell && S.unread) { await api('POST', '/notifications/read', {}); S.unread = 0; S.notes = (S.notes || []).map(n => ({ ...n, read: true })); } renderChrome(); return; }
       case 'otp-reset': S.otpSent = false; S.devCode = null; break;
       case 'filter': S.q.type = el.dataset.f; break;
       case 'savedonly': S.q.saved = !S.q.saved; break;

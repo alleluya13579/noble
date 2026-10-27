@@ -33,6 +33,7 @@ async function signIn(phone, extra) {
 }
 
 const S = {};
+const PNG = n => Buffer.concat([Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]), Buffer.from(`fake-png-body-${n}`)]);
 
 test('countries are served with policy and payment methods', async () => {
   const r = await api('GET', '/countries'); assert.equal(r.status, 200);
@@ -69,8 +70,10 @@ test('KYC in sandbox verifies immediately; the same document on a second account
 test('landlord submits a listing with a photo and a lease document; it waits in the queue', async () => {
   const r = await api('POST', '/listings', { token: S.seller.token, body: { type: 'rent', title: '2-bed apartment with balcony', price_minor: 85000_00, lat: -1.2921, lng: 36.7822, place_name: 'Kilimani', address_private: 'Rose Avenue 12, apt 4B', size: 96, size_unit: 'sqm', bedrooms: 2, title_status: 'Lease authority letter from owner' } });
   assert.equal(r.status, 201, JSON.stringify(r.data)); S.listing = r.data; assert.equal(r.data.status, 'pending'); assert.equal(r.data.currency, 'KES');
-  const ph = await api('POST', `/listings/${S.listing.id}/photos`, { token: S.seller.token, raw: Buffer.from('fake-png-bytes-1'), contentType: 'image/png' });
+  const ph = await api('POST', `/listings/${S.listing.id}/photos`, { token: S.seller.token, raw: PNG(1), contentType: 'image/png' });
   assert.equal(ph.status, 201); assert.deepEqual(ph.data.duplicate_of, []);
+  const notImage = await api('POST', `/listings/${S.listing.id}/photos`, { token: S.seller.token, raw: Buffer.from('<script>alert(1)</script>'), contentType: 'image/png' });
+  assert.equal(notImage.status, 400, 'magic bytes are checked, not the declared content type');
   const doc = await api('POST', `/listings/${S.listing.id}/documents?kind=lease_authority`, { token: S.seller.token, raw: Buffer.from('%PDF-1.4 lease'), contentType: 'application/pdf' });
   assert.equal(doc.status, 201);
   const pub = await api('GET', `/listings?country=KE`); assert.equal(pub.data.total, 0, 'pending listings are not public');
@@ -80,7 +83,7 @@ test('landlord submits a listing with a photo and a lease document; it waits in 
 test('a second listing reusing the same photo is flagged as a duplicate', async () => {
   const r = await api('POST', '/listings', { token: S.seller.token, body: { type: 'sale', title: 'Family house on half-acre', price_minor: 48_500_000_00, lat: -1.32, lng: 36.71, place_name: 'Karen', size: 0.5, size_unit: 'acres', bedrooms: 4, title_status: 'Freehold title deed' } });
   S.listing2 = r.data;
-  const ph = await api('POST', `/listings/${S.listing2.id}/photos`, { token: S.seller.token, raw: Buffer.from('fake-png-bytes-1'), contentType: 'image/png' });
+  const ph = await api('POST', `/listings/${S.listing2.id}/photos`, { token: S.seller.token, raw: PNG(1), contentType: 'image/png' });
   assert.deepEqual(ph.data.duplicate_of, [S.listing.id]);
 });
 
@@ -191,6 +194,31 @@ test('integrations report sandbox mode and the keys that unlock each provider', 
   assert.ok(r.data.every(i => i.mode === 'sandbox')); assert.ok(r.data.find(i => i.id === 'mpesa').unlock_with.includes('MPESA_CONSUMER_KEY'));
 });
 
-test('health reports which database backend is in use', async () => {
-  const r = await api('GET', '/health'); assert.equal(r.data.database, TARGET.startsWith('postgres') ? 'postgres' : 'sqlite'); assert.equal(r.data.countries, 9);
+test('health, readiness and metrics', async () => {
+  const dialect = TARGET.startsWith('postgres') ? 'postgres' : 'sqlite';
+  const h = await api('GET', '/health'); assert.equal(h.data.database, dialect);
+  const r = await api('GET', '/ready'); assert.equal(r.status, 200); assert.equal(r.data.countries, 9);
+  const m = await fetch(base + '/metrics'); const text = await m.text();
+  assert.match(text, /noble_http_requests_total\{route="POST \/transactions",status="201"\} \d+/);
+  assert.match(text, /noble_transactions\{state="released"\} 1/);
+  assert.match(text, /noble_http_request_duration_ms_count\{route="GET \/listings"\}/);
+});
+
+test('notifications inbox: the landlord was told about the approval, the offer and the escrow', async () => {
+  const n = await api('GET', '/notifications', { token: S.seller2?.token || S.seller.token });
+  assert.equal(n.status, 401, 'suspended seller sessions were revoked');
+  const buyer = await api('GET', '/notifications', { token: S.buyer.token });
+  assert.ok(buyer.data.unread > 0);
+  assert.ok(buyer.data.items.some(x => /held in escrow/.test(x.text)), 'escrow held notification');
+  assert.ok(buyer.data.items.some(x => /accepted your offer/.test(x.text)), 'offer accepted notification');
+  const read = await api('POST', '/notifications/read', { token: S.buyer.token, body: {} }); assert.equal(read.status, 200);
+  const after = await api('GET', '/notifications', { token: S.buyer.token }); assert.equal(after.data.unread, 0);
+});
+
+test('logout revokes the session; security headers and request ids are set', async () => {
+  const me = await fetch(base + '/me', { headers: { Authorization: `Bearer ${S.buyer.token}`, 'X-Request-Id': 'req-abc-1' } });
+  assert.equal(me.headers.get('x-request-id'), 'req-abc-1'); assert.equal(me.headers.get('x-content-type-options'), 'nosniff'); assert.equal(me.headers.get('x-frame-options'), 'DENY');
+  const app = await fetch(base + '/app'); assert.match(app.headers.get('content-security-policy') || '', /frame-ancestors 'none'/);
+  const out = await api('POST', '/auth/logout', { token: S.buyer.token }); assert.equal(out.status, 204);
+  const gone = await api('GET', '/me', { token: S.buyer.token }); assert.equal(gone.status, 401);
 });

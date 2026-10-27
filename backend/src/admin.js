@@ -4,6 +4,7 @@ import { requireRole, publicUser } from './auth.js';
 import { listingView } from './listings.js';
 import { loadTxn, txnView, applyTransition } from './transactions.js';
 import { integrationStatus } from './config.js';
+import { notify } from './notifications.js';
 import * as E from './escrow.js';
 
 const admin = requireRole('admin');
@@ -38,10 +39,12 @@ export function registerAdminRoutes(r, db) {
         for (const d of docs) await db.run('UPDATE ownership_documents SET checks = ?, checked_by = ?, checked_at = ? WHERE id = ?', JSON.stringify(checks), u.id, Date.now(), d.id);
       });
       await db.audit(u.id, 'listing_approved', 'listing', l.id, { checks }, ctx.ip);
+      await notify(db, l.owner_id, `“${l.title}” was approved and is now live.`, { link: '#' + l.id, sms: true });
     } else if (ctx.body.decision === 'reject') {
       const reason = String(ctx.body.reject_reason || '').trim(); if (reason.length < 5) throw bad('reject_reason is required');
       await db.run("UPDATE listings SET status = 'rejected', reject_reason = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?", reason, u.id, Date.now(), l.id);
       await db.audit(u.id, 'listing_rejected', 'listing', l.id, { reason }, ctx.ip);
+      await notify(db, l.owner_id, `“${l.title}” was not approved: ${reason}. Fix it and relist.`, { link: '#sell', sms: true });
     } else throw bad('decision must be approve or reject');
     return listingView(db, await db.get('SELECT * FROM listings WHERE id = ?', l.id), u);
   });
@@ -55,6 +58,7 @@ export function registerAdminRoutes(r, db) {
       if (a === 'take_down' && rep.listing_id) await db.run("UPDATE listings SET status = 'removed' WHERE id = ?", rep.listing_id);
     });
     await db.audit(u.id, a === 'dismiss' ? 'report_dismissed' : 'listing_taken_down', 'report', rep.id, { listing: rep.listing_id }, ctx.ip);
+    if (a === 'take_down' && rep.listing_id) { const l = await db.get('SELECT owner_id, title FROM listings WHERE id = ?', rep.listing_id); if (l) await notify(db, l.owner_id, `“${l.title}” was taken down after a report. Contact support if you think this is wrong.`, { sms: true }); await notify(db, rep.reporter_id, 'Thanks for your report. The listing has been taken down.'); }
     return { ok: true };
   });
 
